@@ -59,7 +59,7 @@ namespace e2ee {
     static boost::uuids::uuid idOf(const T* item);
     
     virtual ~PbcObjectImpl() { }
-    
+
     T* get() throw() { return wrappedObject; }
     const T* get() const throw() { return wrappedObject; }
   

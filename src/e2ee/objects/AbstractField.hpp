@@ -26,6 +26,8 @@
 #include <memory>
 
 namespace e2ee {
+
+  typedef const field_ptr field_cptr;
   
   class AbstractField : public PbcObjectImpl<struct field_s>{
   public:

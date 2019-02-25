@@ -87,7 +87,7 @@ namespace e2ee {
     
     char buf[2048];
     
-    element_snprint(&buf[0], sizeof(buf)/sizeof(buf[0]), get());
+    element_snprint(&buf[0], sizeof(buf)/sizeof(buf[0]), const_cast<element_ptr>(get()));
     //std::cout << ">>> ID: " << getIdString() << std::endl;
     //std::cout << ">>> converting: " << &buf[0] << std::endl;
     /* remove all characters we do not want */
@@ -180,18 +180,18 @@ namespace e2ee {
     std::shared_ptr<Element> o = std::dynamic_pointer_cast<Element>(other);
     FAIL_UNLESS(o != nullptr);
     FAIL_UNLESS(o->isFinal());
-    return (0 == element_cmp(get(), o->get()));
+    return (0 == element_cmp(const_cast<element_ptr>(get()), const_cast<element_ptr>(o->get())));
   }
   
   bool Element::operator==(const Element& other) const {
     assert(isFinal());
     assert(other.PbcObject::isFinal());
-    return (0 == element_cmp(get(), other.get()));
+    return (0 == element_cmp(const_cast<element_ptr>(get()), const_cast<element_ptr>(other.get())));
   }
   
   std::shared_ptr<Element> Element::initSameAs() const {
     element_ptr element = allocate_unmanaged<element_s>();
-    element_init_same_as(element, get());
+    element_init_same_as(element, const_cast<element_ptr>(get()));
     return std::make_shared<Element>(element, getObjectCatalog(), true, idOf(element));
   }
   
@@ -200,7 +200,7 @@ namespace e2ee {
     assert(e.isFinal());
     
     element_ptr ptr = allocate_unmanaged<element_s>();
-    element_init_same_as(ptr, get());
+    element_init_same_as(ptr, const_cast<element_ptr>(get()));
     element_pow_zn(ptr, (element_ptr) get(), (element_ptr)e.get());
     auto result = std::make_unique<Element>(field, ptr, true);
     assert(field->equals(result->field));
@@ -213,7 +213,7 @@ namespace e2ee {
     //assert(field->equals(e.field));
     
     element_ptr ptr = allocate_unmanaged<element_s>();
-    element_init_same_as(ptr, get());
+    element_init_same_as(ptr, const_cast<element_ptr>(get()));
     element_mul(ptr, (element_ptr) get(), (element_ptr)e.get());
     auto result = std::make_unique<Element>(field, ptr, true);
     assert(field->equals(result->field));
@@ -226,8 +226,8 @@ namespace e2ee {
     //assert(field->equals(e.field));
     
     element_ptr ptr = allocate_unmanaged<element_s>();
-    element_init_same_as(ptr, get());
-    element_div(ptr, (element_ptr) get(), (element_ptr)e.get());
+    element_init_same_as(ptr, const_cast<element_ptr>(get()));
+    element_div(ptr, const_cast<element_ptr>(get()), const_cast<element_ptr>(e.get()));
     auto result = std::make_unique<Element>(field, ptr, true);
     assert(field->equals(result->field));
     return result;
@@ -238,7 +238,7 @@ namespace e2ee {
     assert(isFinal());
     
     element_ptr ptr = allocate_unmanaged<element_s>();
-    element_init_same_as(ptr, get());
+    element_init_same_as(ptr, const_cast<element_ptr>(get()));
     element_invert(ptr, (element_ptr) get());
     auto result = std::make_unique<Element>(field, ptr, true);
     assert(field->equals(result->field));

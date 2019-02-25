@@ -53,7 +53,7 @@ namespace e2ee {
     if (jobj) { RETURN_JSON_OBJECT(jobj, getId(), returnIdOnly); }
     else      { jobj = createJsonStub(root, getId()); }
     
-    fillJsonObject(jobj, get());
+    fillJsonObject(jobj, const_cast<field_ptr>(get()));
     const curve_data* data = (curve_data*) get()->data;
 
     addJsonObject(jobj, KEY_A,          a->toJson(root, true));

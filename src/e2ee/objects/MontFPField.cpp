@@ -18,8 +18,10 @@
 #include <e2ee/objects/AbstractField.hpp>
 #include <e2ee/objects/MontFPField.hpp>
 #include <e2ee/ObjectCatalog.hpp>
+extern "C" {
 #include <pbc.h>
 #include <pbc_fp.h>
+}
 
 namespace e2ee {
   struct json_object*
@@ -28,7 +30,7 @@ namespace e2ee {
     if (jobj) { RETURN_JSON_OBJECT(jobj, getId(), returnIdOnly); }
     else      { jobj = createJsonStub(root, getId()); }
     
-    fillJsonObject(jobj, get());
+    fillJsonObject(jobj, const_cast<field_ptr>(get()));
     const montfp_data* data = (montfp_data*) get()->data;
     
     addJsonObject(jobj, KEY_MODULUS, limbs_to_json(data->primelimbs, data->limbs));

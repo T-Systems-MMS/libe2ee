@@ -10,16 +10,16 @@
 #define test_element_hpp
 
 #include "gtest/gtest.h"
-#include <afgh/objects/GlobalParameters.hpp>
+#include <e2ee/objects/GlobalParameters.hpp>
 #include <memory>
 
 class ElementTest : public ::testing::Test {
 protected:
   void SetUp() {
-    global = std::make_shared<afgh::GlobalParameters>(160, 512);
+    global = std::make_shared<e2ee::GlobalParameters>(160, 512);
   }
   
-  std::shared_ptr<afgh::GlobalParameters> global;
+  std::shared_ptr<e2ee::GlobalParameters> global;
 };
 
 #endif /* test_element_hpp */

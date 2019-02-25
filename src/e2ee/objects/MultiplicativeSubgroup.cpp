@@ -26,7 +26,7 @@ namespace e2ee {
   MultiplicativeSubgroup::MultiplicativeSubgroup(field_ptr field, std::shared_ptr<ObjectCatalog>& catalog, bool isFinal, const boost::uuids::uuid& id)
   : SubField(field, catalog, isFinal, id) {
     if (field->pairing) {
-      pairing = catalog[Pairing::idOf(field->pairing)]);
+      pairing = std::dynamic_pointer_cast<Pairing>((*catalog)[Pairing::idOf(field->pairing)]);
     }
   }
   

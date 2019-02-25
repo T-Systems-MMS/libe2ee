@@ -194,11 +194,14 @@ namespace e2ee {
     return std::make_shared<Element>(element, getObjectCatalog(), true, Element::idOf(element));
   }
   std::unique_ptr<Element>
-  Pairing::apply(const std::shared_ptr<Element>& g1,
-                 const std::shared_ptr<Element>& g2) const {
+  Pairing::apply(const std::shared_ptr<Element>& e1,
+                 const std::shared_ptr<Element>& e2) const {
     element_ptr element = allocate_unmanaged<element_s>();
     element_init_GT(element, const_cast<pairing_ptr>(get()));
-    pairing_apply(element, g1->get(), g2->get(), get());
+    pairing_apply(element,
+            const_cast<element_ptr>(e1->get()),
+            const_cast<element_ptr>(e2->get()),
+            const_cast<pairing_ptr>(get()));
     return std::make_unique<Element>(element, getObjectCatalog(), true, Element::idOf(element));
   }
 }
