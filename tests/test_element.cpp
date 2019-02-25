@@ -31,7 +31,7 @@ TEST_F(ElementTest, TestElementIdUnambiguity) {
 template <class T>
 void testJsonExport(std::shared_ptr<T> obj1) {
   std::string json = obj1->exportJson();
-  std::cout << json << std::endl;
+  //std::cout << json << std::endl;
   std::shared_ptr<e2ee::ObjectCatalog> catalog = e2ee::ObjectCatalog::getInstance();
   catalog->populate(json);
   std::shared_ptr<e2ee::PbcObject> obj2 = catalog->root();
@@ -39,9 +39,9 @@ void testJsonExport(std::shared_ptr<T> obj1) {
   ASSERT_EQ(*obj1, *obj2);
 }
 
-//TEST_F(ElementTest, TestGlobalElementg) { testJsonExport(global->g()); }
-TEST_F(ElementTest, TestGlobalElementZ) { testJsonExport(global->Z()); }
-/*
+TEST_F(ElementTest, TestGlobalElementg) { testJsonExport(global->g()); }
+//TEST_F(ElementTest, TestGlobalElementZ) { testJsonExport(global->Z()); }
+
  TEST_F(ElementTest, TestPairingG1) { testJsonExport(global->pairing()->getG1()); }
 TEST_F(ElementTest, TestPairingG2) { testJsonExport(global->pairing()->getGT()); }
 TEST_F(ElementTest, TestPairing) { testJsonExport(global->pairing()); }
@@ -71,4 +71,4 @@ TEST_F(ElementTest, TestSecondLevelEncryption) {
   std::shared_ptr<e2ee::Element> message2 = ciphertext2->decryptFirstLevel(receiver->getSecretKey());
   ASSERT_EQ(*message1, *message2);
 }
-*/
+

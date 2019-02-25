@@ -40,7 +40,8 @@ namespace e2ee {
     if (catalog->hasObject(idOf(ptr))) {
       return std::dynamic_pointer_cast<AbstractField>(catalog->at(idOf(ptr)));
     }
-    
+
+    assert(ptr->name != nullptr);
     auto c = constructors.find(ptr->name);
     if (c == constructors.end()) {
       return nullptr;

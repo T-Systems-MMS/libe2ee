@@ -21,6 +21,9 @@
 #include <e2ee/objects/AbstractField.hpp>
 #include <e2ee/objects/MontFPField.hpp>
 #include <e2ee/ObjectCatalog.hpp>
+extern "C" {
+#include <pbc.h>
+}
 
 namespace e2ee {
   
@@ -35,6 +38,7 @@ namespace e2ee {
     pbc_param_init_a_gen(&params, rBits, qBits);
     
     pairing_init_pbc_param(ptr, &params);
+
     set(ptr);
     setObjectCatalog(ObjectCatalog::getInstance());
     
