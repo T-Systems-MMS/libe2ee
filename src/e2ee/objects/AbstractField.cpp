@@ -64,7 +64,7 @@ namespace e2ee {
   field_ptr
   AbstractField::parse_native(struct json_object* jobj) {
     const char* type = NULL;
-    const char* subtype = NULL;
+    const char* subtype = nullptr;
     field_ptr field = allocate_unmanaged<struct field_s>();
     
     /* read type and subtype*/

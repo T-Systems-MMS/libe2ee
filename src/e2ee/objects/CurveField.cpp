@@ -28,7 +28,7 @@ namespace e2ee {
   : AbstractField("curve", isFinal, field, catalog, id), initialized(false) {
   }
   
-  void CurveField::updateElement(std::shared_ptr<Element>& dst, const element_ptr e) {
+  void CurveField::updateElement(std::shared_ptr<Element>& dst, element_ptr e) {
     if (! dst) {
       dst = std::make_shared<Element>(e,
                                       getObjectCatalog(),
@@ -61,7 +61,7 @@ namespace e2ee {
     addJsonObject(jobj, KEY_GEN,        gen->toJson(root, true));
     addJsonObject(jobj, KEY_GENNOCOFAC, gen_no_cofac->toJson(root, true));
     
-    if (data->cofac != NULL) {
+    if (data->cofac != nullptr) {
       addJsonObject(jobj, KEY_COFAC, mpz_to_json(data->cofac));
     }
     if (data->quotient_cmp != NULL) {

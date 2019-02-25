@@ -31,7 +31,6 @@ namespace e2ee {
   
   class AbstractField : public PbcObjectImpl<struct field_s>{
   public:
-    typedef PbcObjectImpl<struct field_s> baseclass_t;
     
     AbstractField(const std::string& subtype,
                   bool isFinal,
@@ -56,9 +55,6 @@ namespace e2ee {
     
     static bool compareField(field_cptr f1, field_cptr f2, std::shared_ptr<ObjectCatalog>&);
     virtual void updateMembers() {}
-    
-    
-    const __mpz_struct * getOrder () const { return &get()->order[0]; }
   protected:
     
     static field_ptr

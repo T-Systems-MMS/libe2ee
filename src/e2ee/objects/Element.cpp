@@ -28,10 +28,11 @@ extern "C" {
 }
 #include <memory>
 #include <sstream>
+#include <utility>
 #include <iostream>
 
 namespace e2ee {
-  
+
   const std::string Element::typeId = "element";
   const std::string Element::subtypeId = "";
   
@@ -58,7 +59,7 @@ namespace e2ee {
                   Element::getSubtypeId(),
                   isFinal,
                   element),
-    field (field)  {
+    field (std::move(field))  {
       if (isFinal) {
         char buf[2048];
         element_snprint(&buf[0], sizeof(buf)/sizeof(buf[0]), element);
@@ -168,7 +169,7 @@ namespace e2ee {
     }
     
     element_init(get(), field->get());
-    const int success = element_set_str(get(), value.c_str(), 10);
+    element_set_str(get(), value.c_str(), 10);
     
     assert (get()->data != NULL);
     isFinal(true);

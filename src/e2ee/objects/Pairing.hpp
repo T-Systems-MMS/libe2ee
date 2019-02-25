@@ -59,8 +59,7 @@ namespace e2ee {
     std::shared_ptr<Pairing> construct(struct json_object* jobj, std::shared_ptr<ObjectCatalog>& catalog, const boost::uuids::uuid& id);
     
     percent_t finalize() override;
-    
-    void setField(field_ptr* dst, std::shared_ptr<AbstractField> src);
+
     bool isFinal() const throw() override { return PbcObject::isFinal(); }
     
     std::shared_ptr<AbstractField> getG1() const throw() { return G1; }

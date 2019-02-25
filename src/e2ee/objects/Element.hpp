@@ -61,12 +61,7 @@ namespace e2ee {
     }
     
     std::unique_ptr<Element> operator !() const;
-    
-    //Element(const Element& e);
-    //Element(const std::shared_ptr<Element>& e);
-    
-    std::unique_ptr<std::basic_string<char>, std::default_delete<std::basic_string<char> > > extracted(json_object *jobj, mpz_ptr &m, std::vector<std::unique_ptr<std::string> > &values) const;
-    
+
     struct json_object* toJson(struct json_object* root, bool returnIdOnly = false) const override;
     
     static

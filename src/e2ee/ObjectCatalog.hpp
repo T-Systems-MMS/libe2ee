@@ -57,10 +57,6 @@ namespace e2ee {
       objectList[obj->getId()] = obj;
     }
     
-    void extracted(const std::shared_ptr<PbcObject> &obj);
-    
-    void extracted();
-    
     json_object* getJsonObject(const std::string& id);
     
     std::shared_ptr<PbcObject>& at(const boost::uuids::uuid& id) { return objectList.at(id); }

@@ -53,9 +53,6 @@ namespace e2ee {
     wrappedObject(wrappedObject)
     { }
     
-    static void
-    get_id(char* dst, const T* obj, size_t length);
-    
     static boost::uuids::uuid idOf(const T* item);
     
     virtual ~PbcObjectImpl() { }

@@ -29,21 +29,26 @@ TEST_F(ElementTest, TestElementIdUnambiguity) {
 }
 
 template <class T>
-void testJsonExport(std::shared_ptr<T> obj1) {
+void testJsonExport(std::shared_ptr<T> obj1, bool show=false) {
   std::string json = obj1->exportJson();
-  //std::cout << json << std::endl;
+  if (show) {
+    std::cout << json << std::endl;
+  }
   std::shared_ptr<e2ee::ObjectCatalog> catalog = e2ee::ObjectCatalog::getInstance();
   catalog->populate(json);
   std::shared_ptr<e2ee::PbcObject> obj2 = catalog->root();
-  
+
+  if (show) {
+    std::cout << obj2->exportJson() << std::endl;
+  }
   ASSERT_EQ(*obj1, *obj2);
 }
 
 TEST_F(ElementTest, TestGlobalElementg) { testJsonExport(global->g()); }
 //TEST_F(ElementTest, TestGlobalElementZ) { testJsonExport(global->Z()); }
 
- TEST_F(ElementTest, TestPairingG1) { testJsonExport(global->pairing()->getG1()); }
-TEST_F(ElementTest, TestPairingG2) { testJsonExport(global->pairing()->getGT()); }
+TEST_F(ElementTest, TestPairingG1) { testJsonExport(global->pairing()->getG1()); }
+TEST_F(ElementTest, TestPairingG2) { testJsonExport(global->pairing()->getG2()); }
 TEST_F(ElementTest, TestPairing) { testJsonExport(global->pairing()); }
 
 TEST_F(ElementTest, TestFirstLevelEncryption) {

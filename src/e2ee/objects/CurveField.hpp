@@ -41,13 +41,12 @@ namespace e2ee {
     }
     bool operator==(const CurveField& other) const;
     
-    json_object* toJson(json_object* root, bool returnIdOnly = false) const override;
+    json_object* toJson(json_object* root, bool returnIdOnly) const override;
     
     static
     std::shared_ptr<CurveField> construct(struct json_object* jobj, std::shared_ptr<ObjectCatalog>& catalog, const boost::uuids::uuid& id);
     
     percent_t finalize() override;
-    void extracted(const curve_data *data);
     
     void updateMembers() override;
     
@@ -58,7 +57,7 @@ namespace e2ee {
     set_gen(std::shared_ptr<Element> gen);
     
   private:
-    void updateElement(std::shared_ptr<Element>& dst, const element_ptr e);
+    void updateElement(std::shared_ptr<Element>& dst, element_ptr e);
     
     std::shared_ptr<Element> a;
     std::shared_ptr<Element> b;

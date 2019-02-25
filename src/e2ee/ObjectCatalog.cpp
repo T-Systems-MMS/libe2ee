@@ -46,7 +46,7 @@ namespace e2ee {
     addParser<QuadraticField>("fi");
     addParser<MultiplicativeSubgroup>("mulg");
     addParser<Pairing>("pairing");
-    addParser<Element>("element");
+    addParser<Element>(Element::getTypeId());
     
     parseJson(json);
     assert(base != NULL);
