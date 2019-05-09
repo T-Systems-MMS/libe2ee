@@ -91,7 +91,15 @@ namespace e2ee {
     newObject->setObjectCatalog(catalog);
     newObject->setJsonObject(jso);
     newObject->setId(id);
-    catalog->objectList[id] = newObject;
+    catalog->objectList.insert(std::make_pair(id, newObject));
+
+    /* parsed objects inherit their ids from the json document,
+     * but they must also be resolvable using their native id
+     */
+    if (id == newObject->nativeId()) {
+      catalog->objectList.insert(std::make_pair(newObject->nativeId(), newObject));
+    }
+
     assert(catalog->objectList.find(id) != catalog->objectList.end());
     assert(catalog->objectList.find(id)->second->getId() == id);
     
@@ -156,12 +164,17 @@ namespace e2ee {
           isFinal &= i.second->isFinal();
         }
       }
-      std::cout << status << "% " << std::endl;
+      //std::cout << status/objectList.size() << "% " << std::endl;
       
       assert(isFinal || status > old_status);
       old_status = status;
     } while (! isFinal);
+
     assert (status == 100 * objectList.size());
+    for(auto i: objectList) {
+      assert(i.second->isFinal());
+      assert(i.second->isValid());
+    }
   }
   
   std::shared_ptr<PbcObject>
@@ -182,15 +195,6 @@ namespace e2ee {
     
     return iter->second;
   }
-  /*
-  template <>
-  __mpz_struct
-  getNativeObject(json_object* jobj, const JsonKey& key) {
-    mpz_ptr ptr = getNativeObject<mpz_ptr>(jobj, key);
-    const __mpz_struct m = *ptr;
-    free(ptr);
-    return m;
-  }*/
   
   afgh_mpz_t
   getMpzFromJson(json_object* jobj, const JsonKey& key) {
@@ -202,8 +206,7 @@ namespace e2ee {
   getLimbsFromJson(json_object* jobj, const JsonKey& key) {
     const std::string strObj = ObjectCatalog::get_string_value_by_id(jobj, key);
     size_t limbs = 0;
-    mp_limb_t *ptr = str_to_limbs(strObj.cbegin(), strObj.cend(), &limbs);
-    return std::unique_ptr<mp_limb_t>(ptr);
+    return str_to_limbs(strObj.cbegin(), strObj.cend(), &limbs);
   }
   
   
@@ -213,8 +216,26 @@ namespace e2ee {
     if (! json_object_object_get_ex(jobj, key.c_str(), &o)) {
       afgh_throw_line("no value found for key '%s'", key.c_str());
     }
-    
     return json_object_get_string(o);
+  }
+
+
+  std::shared_ptr<Pairing> ObjectCatalog::operator[](const pairing_ptr obj) {
+    auto id = Pairing::idOf(obj);
+    if (! hasObject(id)) {
+      objectList.insert(std::make_pair(id, std::make_shared<Pairing>(obj, true)));
+    }
+    return std::dynamic_pointer_cast<Pairing>(objectList[id]);
+  }
+
+  std::shared_ptr<AbstractField> ObjectCatalog::operator[](const field_ptr obj) {
+    auto id = AbstractField::idOf(obj);
+    if (! hasObject(id)) {
+      auto self = shared_from_this();
+      auto field = AbstractField::constructFromNative(obj, self);
+      objectList.insert(std::make_pair(id, field));
+    }
+    return std::dynamic_pointer_cast<AbstractField>(objectList[id]);
   }
   
   bool isValidUuid(const std::string& maybe_uuid,  boost::uuids::uuid& result) {

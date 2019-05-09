@@ -32,12 +32,13 @@ namespace e2ee {
   class Element : public PbcObjectImpl<struct element_s> {
   public:
     
-    Element(element_ptr element, std::shared_ptr<ObjectCatalog>& catalog, bool isFinal, const boost::uuids::uuid& id);
+    Element(element_ptr element, std::shared_ptr<ObjectCatalog> catalog, bool isFinal, const boost::uuids::uuid& id);
     Element(std::shared_ptr<AbstractField> field, element_ptr element, bool isFinal=false);
     Element(std::shared_ptr<AbstractField> field);
     
     std::shared_ptr<Element> initSameAs() const;
     Element& randomize();
+    bool isValid() const override;
     
     bool equals(const std::shared_ptr<PbcObject>& other) const override;
     

@@ -35,6 +35,7 @@ void testJsonExport(std::shared_ptr<T> obj1, bool show=false) {
     std::cout << json << std::endl;
   }
   std::shared_ptr<e2ee::ObjectCatalog> catalog = e2ee::ObjectCatalog::getInstance();
+  catalog->clear();
   catalog->populate(json);
   std::shared_ptr<e2ee::PbcObject> obj2 = catalog->root();
 
@@ -46,7 +47,6 @@ void testJsonExport(std::shared_ptr<T> obj1, bool show=false) {
 
 TEST_F(ElementTest, TestGlobalElementg) { testJsonExport(global->g()); }
 //TEST_F(ElementTest, TestGlobalElementZ) { testJsonExport(global->Z()); }
-
 TEST_F(ElementTest, TestPairingG1) { testJsonExport(global->pairing()->getG1()); }
 TEST_F(ElementTest, TestPairingG2) { testJsonExport(global->pairing()->getG2()); }
 TEST_F(ElementTest, TestPairing) { testJsonExport(global->pairing()); }

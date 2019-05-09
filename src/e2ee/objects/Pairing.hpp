@@ -30,12 +30,18 @@ namespace e2ee {
   class Pairing
   : public PbcObjectImpl<struct pairing_s> {
   public:
-    Pairing(int32_t rBits, int32_t qBits, const boost::uuids::uuid id = boost::uuids::nil_uuid());
-    
-    Pairing(pairing_ptr pairing, bool isFinal)
-    : PbcObjectImpl("pairing", "", isFinal, pairing) {}
+
+    Pairing(pairing_ptr pairing, bool isFinal,
+            const boost::uuids::uuid& id = boost::uuids::nil_uuid());
+
+    static
+    std::shared_ptr<Pairing> generate(int32_t rBits, int32_t qBits,
+            const boost::uuids::uuid& id = boost::uuids::nil_uuid());
     
     virtual ~Pairing();
+
+    static
+    std::shared_ptr<AbstractField> loadFieldSafely(field_ptr ptr, std::shared_ptr<ObjectCatalog>& catalog);
     
     std::shared_ptr<Element> initG1();
     std::shared_ptr<Element> initG2();
@@ -78,7 +84,10 @@ namespace e2ee {
     std::shared_ptr<AbstractField> G2;
     std::shared_ptr<MultiplicativeSubgroup> GT;
     std::shared_ptr<MontFPField> Zr;
-    
+
+    std::shared_ptr<AbstractField> Eq;
+    std::shared_ptr<AbstractField> Fq;
+    std::shared_ptr<AbstractField> Fq2;
     bool isGTinitialized = false;
   };
   

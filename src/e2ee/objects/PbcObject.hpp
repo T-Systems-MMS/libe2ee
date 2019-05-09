@@ -39,6 +39,8 @@ if (true == (condition)) { return false; }
 #define FAIL_UNLESS(condition) \
 if (false == (condition)) { return false; }
 
+#define SUCCEED() do { return true; } while (0)
+
 namespace e2ee {
   class ObjectCatalog;
   
@@ -65,7 +67,6 @@ namespace e2ee {
     
     virtual bool equals(const std::shared_ptr<PbcObject>& other) const = 0;
     virtual bool operator==(const PbcObject& other) const = 0;
-    virtual operator bool() const throw() = 0;
     
     std::string exportJson() const;
     virtual json_object* toJson(json_object* root, bool returnIdOnly = false) const = 0;
@@ -76,11 +77,13 @@ namespace e2ee {
     const std::string& getSubtype() const throw() { return subtype; }
     
     virtual bool isFinal() const noexcept {return _isFinal;}
-    
-    typedef std::function<std::shared_ptr<PbcObject>(struct json_object* jobj)> json_parser_t;
-    
+    virtual bool isValid() const { return true; }
     virtual percent_t finalize() = 0;
-    
+
+    static
+    boost::uuids::uuid idOf(const void* item);
+    virtual const boost::uuids::uuid& nativeId() const noexcept = 0;
+
     static inline struct json_object *
     objectById(struct json_object * jobj, const JsonKey& key) {
       struct json_object * o = NULL;
@@ -119,11 +122,16 @@ namespace e2ee {
       this->catalog = catalog;
     }
     
-    std::shared_ptr<ObjectCatalog>& getObjectCatalog() const {
+    std::weak_ptr<ObjectCatalog> getObjectCatalog() const {
       return catalog;
     }
     
   protected:
+
+    std::shared_ptr<ObjectCatalog> getCatalog() const {
+      assert(catalog != nullptr);
+      return catalog;
+    }
     
     static
     struct json_object* createJsonStub(struct json_object* root,

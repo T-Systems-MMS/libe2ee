@@ -25,16 +25,22 @@ namespace e2ee {
   
   MultiplicativeSubgroup::MultiplicativeSubgroup(field_ptr field, std::shared_ptr<ObjectCatalog>& catalog, bool isFinal, const boost::uuids::uuid& id)
   : SubField(field, catalog, isFinal, id) {
-    if (field->pairing) {
-      pairing = std::dynamic_pointer_cast<Pairing>((*catalog)[Pairing::idOf(field->pairing)]);
+  }
+
+  void MultiplicativeSubgroup::updateMembers() {
+    AbstractField::updateMembers();
+    if (get()->pairing) {
+      pairing = (*getCatalog())[get()->pairing];
     }
   }
   
   struct json_object*
   MultiplicativeSubgroup::toJson(struct json_object* root, bool returnIdOnly) const {
-    json_object* jobj = SubField<MultiplicativeSubgroup>::toJson(root, returnIdOnly);
+    json_object* jobj = SubField<MultiplicativeSubgroup>::toJson(root, false);
     if (auto p = getPairing().lock()) {
       addJsonObject(jobj, KEY_PAIRING, p->toJson(root, true));
+    } else {
+      afgh_throw_line("incomplete mulg field, I won't export this sh*t");
     }
     RETURN_JSON_OBJECT(jobj, getId(), returnIdOnly);
   }

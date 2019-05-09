@@ -21,6 +21,7 @@
 #include <e2ee/objects/AbstractField.hpp>
 #include <e2ee/objects/MontFPField.hpp>
 #include <e2ee/ObjectCatalog.hpp>
+#include <iostream>
 extern "C" {
 #include <pbc.h>
 }
@@ -29,8 +30,7 @@ namespace e2ee {
   
   class MultiplicativeSubgroup;
   
-  Pairing::Pairing(int32_t rBits, int32_t qBits, const boost::uuids::uuid id)
-  : PbcObjectImpl("pairing", "", false, nullptr, id) {
+  std::shared_ptr<Pairing> Pairing::generate(int32_t rBits, int32_t qBits, const boost::uuids::uuid& id) {
     pairing_ptr ptr = allocate_unmanaged<pairing_s>();
     struct pbc_param_s params;
     bzero(&params, sizeof(params));
@@ -39,19 +39,41 @@ namespace e2ee {
     
     pairing_init_pbc_param(ptr, &params);
 
-    set(ptr);
-    setObjectCatalog(ObjectCatalog::getInstance());
-    
-    G1 = AbstractField::constructFromNative(ptr->G1, getObjectCatalog());
-    G2 = AbstractField::constructFromNative(ptr->G2, getObjectCatalog());
-    GT = std::dynamic_pointer_cast<MultiplicativeSubgroup>(AbstractField::constructFromNative(ptr->GT, getObjectCatalog()));
-    Zr = std::dynamic_pointer_cast<MontFPField>(AbstractField::constructFromNative(ptr->Zr, getObjectCatalog()));
-    
-    isFinal(true);
+    return std::make_shared<Pairing>(ptr, true, id);
+  }
+
+  std::shared_ptr<AbstractField> Pairing::loadFieldSafely(field_ptr ptr, std::shared_ptr<ObjectCatalog>& catalog) {
+    std::shared_ptr<AbstractField> obj;
+    if (catalog->hasObject(idOf(ptr))) {
+      obj = (*catalog)[ptr];
+    } else {
+      obj = AbstractField::constructFromNative(ptr, catalog);
+    }
+    assert(obj->isValid());
+    return obj;
+  }
+
+  Pairing::Pairing(pairing_ptr pairing, bool isFinal, const boost::uuids::uuid& id)
+  : PbcObjectImpl("pairing", "", isFinal, pairing,
+                  ((id==boost::uuids::nil_uuid()) ? (idOf(pairing)) : (id))) {
+    a_pairing_data_ptr pdata = reinterpret_cast<a_pairing_data_ptr>(pairing->data);
+    auto catalog = ObjectCatalog::getInstance();
+    setObjectCatalog(catalog);
+
+    G1 = loadFieldSafely(pairing->G1, catalog);
+    G2 = loadFieldSafely(pairing->G2, catalog);
+    GT = std::dynamic_pointer_cast<MultiplicativeSubgroup>(
+            loadFieldSafely(pairing->GT, catalog));
+    Zr = std::dynamic_pointer_cast<MontFPField>(
+            loadFieldSafely(pairing->Zr, catalog));
+
+    Eq = loadFieldSafely(pdata->Eq, catalog);
+    Fq = loadFieldSafely(pdata->Fq, catalog);
+    Fq2 = loadFieldSafely(pdata->Fq2, catalog);
   }
   
   Pairing::~Pairing() {
-    pairing_clear(get());
+    //pairing_clear(get());
     set(nullptr);
   }
   
@@ -69,6 +91,11 @@ namespace e2ee {
     addJsonObject(jobj, KEY_Zr, Zr->toJson(root, true));
     addJsonObject(jobj, KEY_r, mpz_to_json(get()->r));
     addJsonObject(jobj, KEY_phikonr, mpz_to_json(get()->phikonr));
+
+    addJsonObject(jobj, KEY_Eq, Eq->toJson(root, true));
+    addJsonObject(jobj, KEY_Fq, Fq->toJson(root, true));
+    addJsonObject(jobj, KEY_Fq2, Fq2->toJson(root, true));
+
     RETURN_JSON_OBJECT(jobj, getId(), returnIdOnly);
   }
   
@@ -76,7 +103,7 @@ namespace e2ee {
   Pairing::construct(struct json_object* jobj, std::shared_ptr<ObjectCatalog>& catalog, const boost::uuids::uuid& id) {
     afgh_mpz_t ptr;
     pairing_ptr pairing = allocate_unmanaged<struct pairing_s>();
-    auto newPairing = std::make_shared<Pairing>(512, 160, id);
+    auto newPairing = generate(512, 160, id);
     newPairing->setObjectCatalog(catalog);
     newPairing->set(pairing);
     
@@ -86,6 +113,9 @@ namespace e2ee {
     
     ptr = getMpzFromJson(jobj, KEY_phikonr);
     mpz_set(pairing->phikonr, ptr.get());
+
+    a_pairing_data_ptr p = allocate_unmanaged<a_pairing_data>(sizeof(a_pairing_data));
+    pairing->data = p;
 
     /* make sure finalize() is being called */
     newPairing->isFinal(false);
@@ -180,22 +210,30 @@ namespace e2ee {
   std::shared_ptr<Element> Pairing::initG1() {
     element_ptr element = allocate_unmanaged<element_s>();
     element_init_G1(element, get());
-    return std::make_shared<Element>(element, getObjectCatalog(), true, Element::idOf(element));
+    auto res = std::make_shared<Element>(element, getCatalog(), true, Element::idOf(element));
+    assert(res->isValid());
+    return res;
   }
   std::shared_ptr<Element> Pairing::initG2() {
     element_ptr element = allocate_unmanaged<element_s>();
     element_init_G2(element, get());
-    return std::make_shared<Element>(element, getObjectCatalog(), true, Element::idOf(element));
+    auto res = std::make_shared<Element>(element, getCatalog(), true, Element::idOf(element));
+    assert(res->isValid());
+    return res;
   }
   std::shared_ptr<Element> Pairing::initGT() {
     element_ptr element = allocate_unmanaged<element_s>();
     element_init_GT(element, get());
-    return std::make_shared<Element>(element, getObjectCatalog(), true, Element::idOf(element));
+    auto res = std::make_shared<Element>(element, getCatalog(), true, Element::idOf(element));
+    assert(res->isValid());
+    return res;
   }
   std::shared_ptr<Element> Pairing::initZr() {
     element_ptr element = allocate_unmanaged<element_s>();
     element_init_Zr(element, get());
-    return std::make_shared<Element>(element, getObjectCatalog(), true, Element::idOf(element));
+    auto res = std::make_shared<Element>(element, getCatalog(), true, Element::idOf(element));
+    assert(res->isValid());
+    return res;
   }
   std::unique_ptr<Element>
   Pairing::apply(const std::shared_ptr<Element>& e1,
@@ -206,6 +244,8 @@ namespace e2ee {
             const_cast<element_ptr>(e1->get()),
             const_cast<element_ptr>(e2->get()),
             const_cast<pairing_ptr>(get()));
-    return std::make_unique<Element>(element, getObjectCatalog(), true, Element::idOf(element));
+    auto res = std::make_unique<Element>(element, getCatalog(), true, Element::idOf(element));
+    assert(res->isValid());
+    return res;
   }
 }

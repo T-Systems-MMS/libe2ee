@@ -36,20 +36,21 @@ namespace e2ee {
   const std::string Element::typeId = "element";
   const std::string Element::subtypeId = "";
   
-  Element::Element(element_ptr element, std::shared_ptr<ObjectCatalog>& catalog, bool isFinal, const boost::uuids::uuid& id)
+  Element::Element(element_ptr element, std::shared_ptr<ObjectCatalog> catalog, bool isFinal, const boost::uuids::uuid& id)
   : PbcObjectImpl(Element::getTypeId(),
                   Element::getSubtypeId(),
                   isFinal,
                   element,
-                  id),
-  field (nullptr) {
+                  id), field (nullptr) {
     if (isFinal) {
-      field = AbstractField::constructFromNative((field_ptr)&(element->field[0]), catalog);
+      field = (*catalog)[(field_ptr)&(element->field[0])];
+      //field = AbstractField::constructFromNative((field_ptr)&(element->field[0]), catalog);
       
       char buf[2048];
       element_snprint(&buf[0], sizeof(buf)/sizeof(buf[0]), element);
       
       value = std::string(buf);
+      assert(isValid());
     }
   }
   
@@ -58,14 +59,14 @@ namespace e2ee {
   : PbcObjectImpl(Element::getTypeId(),
                   Element::getSubtypeId(),
                   isFinal,
-                  element),
-    field (std::move(field))  {
-      if (isFinal) {
-        char buf[2048];
-        element_snprint(&buf[0], sizeof(buf)/sizeof(buf[0]), element);
-        
-        value = std::string(buf);
-      }
+                  element), field (field)  {
+    if (isFinal) {
+      char buf[2048];
+      element_snprint(&buf[0], sizeof(buf)/sizeof(buf[0]), element);
+
+      value = std::string(buf);
+    }
+    assert(isValid());
   }
   
   
@@ -75,10 +76,23 @@ namespace e2ee {
                   true,
                   allocate_unmanaged<element_s>()), field(field) {
     element_init(get(), field->get());
+    assert(isValid());
+  }
+
+  bool Element::isValid() const {
+    FAIL_UNLESS(isFinal());
+    FAIL_IF(get() == nullptr);
+    FAIL_IF(get()->field == nullptr);
+    FAIL_IF(field == nullptr);
+    FAIL_IF(get()->field != field->get());
+    SUCCEED();
   }
   
   json_object*
   Element::toJson(json_object* root, bool returnIdOnly) const {
+
+    assert(isValid());
+
     json_object* jobj = getJsonStub(root, getId());
     if (jobj) { RETURN_JSON_OBJECT(jobj, getId(), returnIdOnly); }
     else      {
@@ -157,27 +171,30 @@ namespace e2ee {
   percent_t Element::finalize() {
     assert(!isFinal());
     
-    if (! field) {
+    if (field == nullptr) {
       this->field = getObjectFromJson<AbstractField>(KEY_FIELD);
       assert(field != nullptr);
     }
     
     /* we require a field to initialize the element */
     if (field->get()->init == nullptr) {
-      std::cout << "required field is not initialized yet" << std::endl;
+      //std::cout << "required field is not initialized yet" << std::endl;
       return 50;
     }
     
     element_init(get(), field->get());
     element_set_str(get(), value.c_str(), 10);
+
+    assert(field->get() == get()->field);
     
     assert (get()->data != NULL);
     isFinal(true);
+    assert(isValid());
     return 100;
   }
   
   bool Element::equals(const std::shared_ptr<PbcObject>& other) const {
-    FAIL_UNLESS(isFinal());
+    FAIL_UNLESS(isValid());
     std::shared_ptr<Element> o = std::dynamic_pointer_cast<Element>(other);
     FAIL_UNLESS(o != nullptr);
     FAIL_UNLESS(o->isFinal());
@@ -185,7 +202,7 @@ namespace e2ee {
   }
   
   bool Element::operator==(const Element& other) const {
-    assert(isFinal());
+    assert(isValid());
     assert(other.PbcObject::isFinal());
     return (0 == element_cmp(const_cast<element_ptr>(get()), const_cast<element_ptr>(other.get())));
   }
@@ -193,7 +210,7 @@ namespace e2ee {
   std::shared_ptr<Element> Element::initSameAs() const {
     element_ptr element = allocate_unmanaged<element_s>();
     element_init_same_as(element, const_cast<element_ptr>(get()));
-    return std::make_shared<Element>(element, getObjectCatalog(), true, idOf(element));
+    return std::make_shared<Element>(element, getObjectCatalog().lock(), true, idOf(element));
   }
   
   std::unique_ptr<Element> Element::operator ^(const Element& e) const {
@@ -209,8 +226,8 @@ namespace e2ee {
   }
   
   std::unique_ptr<Element> Element::operator *(const Element& e) const {
-    assert(isFinal());
-    assert(e.isFinal());
+    assert(isValid());
+    assert(e.isValid());
     //assert(field->equals(e.field));
     
     element_ptr ptr = allocate_unmanaged<element_s>();
@@ -222,8 +239,8 @@ namespace e2ee {
   }
   
   std::unique_ptr<Element> Element::operator /(const Element& e) const {
-    assert(isFinal());
-    assert(e.isFinal());
+    assert(isValid());
+    assert(e.isValid());
     //assert(field->equals(e.field));
     
     element_ptr ptr = allocate_unmanaged<element_s>();
@@ -236,7 +253,7 @@ namespace e2ee {
   }
   
   std::unique_ptr<Element> Element::operator !() const {
-    assert(isFinal());
+    assert(isValid());
     
     element_ptr ptr = allocate_unmanaged<element_s>();
     element_init_same_as(ptr, const_cast<element_ptr>(get()));

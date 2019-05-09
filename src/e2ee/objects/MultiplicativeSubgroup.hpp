@@ -23,7 +23,7 @@
 
 namespace e2ee {
   
-  class MultiplicativeSubgroup : public SubField<MultiplicativeSubgroup> {
+class MultiplicativeSubgroup : public SubField<MultiplicativeSubgroup> {
   public:
     static constexpr char TYPE_ID[] = "mulg";
     static constexpr char SUBTYPE_ID[] = "";
@@ -39,6 +39,9 @@ namespace e2ee {
     
     virtual json_object* toJson(json_object* root, bool returnIdOnly = false) const override;
     std::weak_ptr<Pairing> getPairing() const { return pairing; }
+
+
+  virtual void updateMembers() override;
     
   private:
     std::weak_ptr<Pairing> pairing;

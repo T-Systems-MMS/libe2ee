@@ -42,37 +42,38 @@ namespace e2ee {
                   bool isFinal,
                   T* wrappedObject)
     : PbcObject(idOf(wrappedObject), type, subtype, isFinal),
-      wrappedObject(wrappedObject)
+      wrappedObject(wrappedObject), _nativeId(idOf(wrappedObject))
       { }
     
     PbcObjectImpl(const std::string& type,
                   const std::string& subtype,
                   bool isFinal,
-                  T* wrappedObject, const boost::uuids::uuid& id)
-    : PbcObject(id, type, subtype, isFinal),
-    wrappedObject(wrappedObject)
+                  T* wrappedObject,
+                  const boost::uuids::uuid& id)
+    : PbcObject(((id == boost::uuids::nil_uuid()) ? (idOf(wrappedObject)) : (id)), type, subtype, isFinal),
+    wrappedObject(wrappedObject), _nativeId(idOf(wrappedObject))
     { }
-    
-    static boost::uuids::uuid idOf(const T* item);
     
     virtual ~PbcObjectImpl() { }
 
     T* get() throw() { return wrappedObject; }
     const T* get() const throw() { return wrappedObject; }
-  
-    operator bool() const throw() { return (wrappedObject != nullptr);}
     
     template <class E>
     std::shared_ptr<E> getObject(const boost::uuids::uuid& id, bool requireFinal = false);
     
     template <class E>
     std::shared_ptr<E> getObjectFromJson(const JsonKey& key, bool requireFinal = false);
+
+    const boost::uuids::uuid& nativeId() const noexcept override { return _nativeId; }
   protected:
-    void set(T* w) throw() { wrappedObject = w; }
+    void set(T* w) throw() { wrappedObject = w; _nativeId = idOf(w); }
     
   private:
     mutable
     T* wrappedObject;
+
+    boost::uuids::uuid _nativeId;
   };
   
   template <class T>
@@ -90,19 +91,13 @@ namespace e2ee {
   template <class E>
   std::shared_ptr<E> PbcObjectImpl<T>::getObjectFromJson(const JsonKey& key,
                                        bool requireFinal) {
-    if (getObjectCatalog() == nullptr || getJsonObject() == nullptr) {
-      return nullptr;
-    } else {
-      return std::dynamic_pointer_cast<E>(getObjectCatalog()->getObjectFromJson(getJsonObject(), key, requireFinal));
+    if (getJsonObject() != nullptr) {
+      if (auto catalog = getObjectCatalog().lock()) {
+        return std::dynamic_pointer_cast<E>(
+                catalog->getObjectFromJson(getJsonObject(), key, requireFinal));
+      }
     }
-  }
-  
-  template <class T>
-  boost::uuids::uuid PbcObjectImpl<T>::idOf(const T* item) {
-    static boost::uuids::name_generator_latest gen(boost::uuids::ns::url());
-    std::stringstream ss;
-    ss << "urn:address:" << std::hex << item;
-    return gen(ss.str());
+    afgh_throw_line("error in internal data types");
   }
 }
 #endif /* afgh_pbc_wrapper_hpp */

@@ -31,7 +31,7 @@ namespace e2ee {
   void CurveField::updateElement(std::shared_ptr<Element>& dst, element_ptr e) {
     if (! dst) {
       dst = std::make_shared<Element>(e,
-                                      getObjectCatalog(),
+                                      getCatalog(),
                                       true,
                                       Element::idOf(e));
     }
@@ -69,6 +69,20 @@ namespace e2ee {
     }
     RETURN_JSON_OBJECT(jobj, getId(), returnIdOnly);
   }
+
+  bool CurveField::isValid() const {
+    FAIL_IF(a == nullptr);
+    FAIL_IF(b == nullptr);
+    FAIL_IF(gen == nullptr);
+    FAIL_IF(gen_no_cofac == nullptr);
+
+    FAIL_UNLESS(a->isValid());
+    FAIL_UNLESS(b->isValid());
+    FAIL_UNLESS(gen->isValid());
+    FAIL_UNLESS(gen_no_cofac->isValid());
+
+    SUCCEED();
+  }
   
   std::shared_ptr<CurveField>
   CurveField::construct(struct json_object* jobj, std::shared_ptr<ObjectCatalog>& catalog, const boost::uuids::uuid& id) {
@@ -83,8 +97,8 @@ namespace e2ee {
   CurveField::finalize() {
     percent_t status = 0;
     assert(!isFinal());
-    if (! a ) { a = getObjectFromJson<Element>(KEY_A); assert(a); status = 10; }
-    if (! b ) { b = getObjectFromJson<Element>(KEY_B); assert(b); status = 20;}
+    if (a == nullptr) { a = getObjectFromJson<Element>(KEY_A); assert(a != nullptr); status = 10; }
+    if (b == nullptr) { b = getObjectFromJson<Element>(KEY_B); assert(b != nullptr); status = 20;}
     
     if (a->get()->field == nullptr || b->get()->field == nullptr) {
       //std::cout << "a and b MUST be initialized first" << std::endl;
@@ -102,21 +116,37 @@ namespace e2ee {
       initialized = true;
       status = 50;
     }
-    
-    auto gen = getObjectFromJson<Element>(KEY_GEN);
-    auto gen_no_cofac = getObjectFromJson<Element>(KEY_GENNOCOFAC);
-    
-    if (gen_no_cofac->isFinal()) {
-      set_gen_no_cofac(gen_no_cofac);
+    assert(initialized);
+
+    if (gen == nullptr) {
+      auto __gen = getObjectFromJson<Element>(KEY_GEN);
+      if (__gen == nullptr) {
+        return status;
+      }
+      if (! __gen->isFinal()) {
+        return status;
+      }
+      set_gen(__gen);
       status = 70;
     }
-    
-    if (gen->isFinal()) {
-      set_gen(gen);
-      status = 100;
+
+    if (gen_no_cofac == nullptr) {
+      auto __gen_no_cofac = getObjectFromJson<Element>(KEY_GENNOCOFAC);
+      if (__gen_no_cofac == nullptr) {
+        return status;
+      }
+      if (! __gen_no_cofac->isFinal()) {
+        return status;
+      }
+      set_gen_no_cofac(__gen_no_cofac);
+      status = 80;
     }
-    
+
     isFinal(initialized && gen_no_cofac->isFinal() && gen->isFinal());
+    if(isFinal()) {
+      status = 100;
+      assert(isValid());
+    }
     return status;
   }
   
@@ -168,6 +198,8 @@ namespace e2ee {
   }
   
   bool CurveField::operator==(const CurveField& other) const {
+    FAIL_UNLESS(isFinal());
+    FAIL_UNLESS(other.isFinal());
     if (! AbstractField::operator==(other)) {
       return false;
     }

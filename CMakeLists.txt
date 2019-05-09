@@ -17,7 +17,7 @@ include_directories("${PROJECT_SOURCE_DIR}/src/lib/pbc/include")
 find_package(GMP REQUIRED)
 
 add_library(e2ee SHARED ${E2EE_SRCS})
-target_link_libraries(e2ee pbc-x86_64 ${GMP_LIBRARIES} json-c)
+target_link_libraries(e2ee pbc ${GMP_LIBRARIES} json-c)
 
 add_subdirectory("${PROJECT_SOURCE_DIR}/src/lib/googletest")
 set_target_properties(gtest PROPERTIES FOLDER extern)

@@ -47,4 +47,24 @@ allocate_unmanaged(size_t count=1) {
   return data;
 }
 
+extern "C" {
+
+int e2ee_isvalid(void*);
+
+/* release memory got from pbc_malloc only by e2ee_free(), do not use free() */
+void * e2ee_malloc(size_t);
+
+/* e2ee_realloc guarantees zeroing out the memory before moving old memory */
+void * e2ee_realloc(void *, size_t);
+
+/* e2ee_realloc guarantees zeroing out the memory before moving old memory */
+void * e2ee_realloc2(void *, size_t, size_t);
+
+/* e2ee_free guarantees zeroing out the memory */
+void e2ee_free(void *);
+
+/* e2ee_free guarantees zeroing out the memory */
+void e2ee_free2(void *, size_t);
+}
+
 #endif /* afgh_memory_h */

@@ -34,8 +34,8 @@ TEST(SerializationTest, TestConversionMap) {
 TEST(SerializationTest, TestLimbSerialization1) {
   auto strObj = createRandomNumber(std::rand() % 50 + 10);
   size_t limbs = 0;
-  mp_limb_t* tmp = e2ee::str_to_limbs(strObj->cbegin(), strObj->cend(), &limbs);
-  auto strObj2 = e2ee::limbs_to_str(tmp, limbs);
+  std::unique_ptr<mp_limb_t> tmp = e2ee::str_to_limbs(strObj->cbegin(), strObj->cend(), &limbs);
+  auto strObj2 = e2ee::limbs_to_str(tmp.get(), limbs);
   ASSERT_EQ(*strObj, *strObj2);
 }
 
@@ -43,7 +43,7 @@ TEST(SerializationTest, TestLimbSerialization3) {
   size_t limbs = 1;
   mp_limb_t value = random();
   auto strObj = e2ee::limbs_to_str(&value, limbs);
-  mp_limb_t* value2 = e2ee::str_to_limbs(strObj->cbegin(), strObj->cend(), &limbs);
+  auto value2 = e2ee::str_to_limbs(strObj->cbegin(), strObj->cend(), &limbs);
   ASSERT_EQ(value, *value2);
 }
 
@@ -54,13 +54,12 @@ TEST(SerializationTest, TestLimbSerialization2) {
   auto strObj = e2ee::limbs_to_str(&lp[0], limbs1);
   
   size_t limbs2 = 0;
-  mp_limb_t* tmp = e2ee::str_to_limbs(strObj->cbegin(), strObj->cend(), &limbs2);
+  auto tmp = e2ee::str_to_limbs(strObj->cbegin(), strObj->cend(), &limbs2);
   
   ASSERT_EQ(limbs1, limbs2);
-  ASSERT_EQ(mpn_cmp(&lp[0], tmp, limbs2), 0);
-  ASSERT_EQ(mpn_cmp(tmp, &lp[0], limbs2), 0);
-  auto strObj2 = e2ee::limbs_to_str(tmp, limbs2);
-  free(tmp);
+  ASSERT_EQ(mpn_cmp(&lp[0], tmp.get(), limbs2), 0);
+  ASSERT_EQ(mpn_cmp(tmp.get(), &lp[0], limbs2), 0);
+  auto strObj2 = e2ee::limbs_to_str(tmp.get(), limbs2);
   ASSERT_EQ(*strObj, *strObj2);
 }
 

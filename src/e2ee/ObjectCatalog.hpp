@@ -27,6 +27,9 @@
 #include <boost/uuid/uuid.hpp>
 
 namespace e2ee {
+
+  class Pairing;
+  class AbstractField;
   
   int
   createObjectStub(json_object *jso,
@@ -40,11 +43,17 @@ namespace e2ee {
   public:
     
     void populate (const std::string& json);
+    void populate (pairing_ptr ptr);
+    void populate (field_ptr ptr);
+    void populate (element_ptr ptr);
+
+    void clear() {objectList.clear();}
     
     /* enforce creation of a shared_ptr */
     static std::shared_ptr<ObjectCatalog>
     getInstance() {
-      return std::shared_ptr<ObjectCatalog>(new ObjectCatalog());
+      static std::shared_ptr<ObjectCatalog> instance = std::shared_ptr<ObjectCatalog>(new ObjectCatalog());
+      return instance;
     }
     
     bool
@@ -56,12 +65,20 @@ namespace e2ee {
       assert(! hasObject(obj->getId()));
       objectList[obj->getId()] = obj;
     }
+
+    void addObject(std::shared_ptr<PbcObject> obj, const boost::uuids::uuid& id) {
+      assert(! hasObject(id));
+      objectList[id] = obj;
+    }
     
     json_object* getJsonObject(const std::string& id);
     
     std::shared_ptr<PbcObject>& at(const boost::uuids::uuid& id) { return objectList.at(id); }
     std::shared_ptr<PbcObject>& operator[](const boost::uuids::uuid& id) { return objectList[id]; }
     std::shared_ptr<PbcObject>& root() { return at(rootId); }
+
+    std::shared_ptr<Pairing>       operator[](const pairing_ptr obj);
+    std::shared_ptr<AbstractField> operator[](const field_ptr obj);
     
     std::shared_ptr<PbcObject> getObjectFromJson(json_object* jobj, const JsonKey& key, bool requireFinal = false);
     
@@ -72,10 +89,7 @@ namespace e2ee {
     
     typedef std::function<std::shared_ptr<PbcObject>
       (struct json_object*, std::shared_ptr<ObjectCatalog>&, const boost::uuids::uuid& id) > parser_t;
-    
-    std::map<boost::uuids::uuid, std::shared_ptr<PbcObject> > objectList;
-    std::map<std::string, parser_t > parsers;
-    
+
     template <class T>
     void addParser(const std::string& typeId) {
       static_assert(std::is_base_of<PbcObject, T>::value, "invalid type argument");
@@ -93,27 +107,16 @@ namespace e2ee {
     base(nullptr), /*root(nullptr), */rootId(boost::uuids::nil_uuid()){}
     
     json_object* base;
-    //json_object* root;
     boost::uuids::uuid rootId;
+
+  public:
+    std::map<boost::uuids::uuid, std::shared_ptr<PbcObject> > objectList;
+
+    std::map<std::string, parser_t > parsers;
   };
   
   bool isValidUuid(const std::string& maybe_uuid,  boost::uuids::uuid& result);
-  /*
-  template <class T>
-  T getNativeObject(json_object* jobj, const JsonKey& key);
-  
-  template <>
-  mpz_ptr
-  getNativeObject(json_object* jobj, const JsonKey& key);
-  
-  template <>
-  __mpz_struct
-  getNativeObject(json_object* jobj, const JsonKey& key);
-  
-  template <>
-  mp_limb_t*
-  getNativeObject(json_object* jobj, const JsonKey& key);
-  */
+
   afgh_mpz_t
   getMpzFromJson(json_object* jobj, const JsonKey& key);
   

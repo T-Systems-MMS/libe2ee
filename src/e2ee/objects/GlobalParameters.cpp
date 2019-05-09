@@ -17,11 +17,15 @@
 
 #include <e2ee/objects/GlobalParameters.hpp>
 #include <e2ee/objects/Pairing.hpp>
+#include <gmp.h>
 
 namespace e2ee {
   
   GlobalParameters::GlobalParameters(int32_t rBits, int32_t qBits) {
-    _pairing = std::make_shared<e2ee::Pairing>(160, 512);
+
+    pbc_set_memory_functions(e2ee_malloc, e2ee_realloc, e2ee_free);
+    mp_set_memory_functions(e2ee_malloc, e2ee_realloc2, e2ee_free2);
+    _pairing = e2ee::Pairing::generate(160, 512);
     _g = _pairing->initG1();
     _g->randomize();
     _Z = _pairing->apply(_g, _g);

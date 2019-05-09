@@ -32,8 +32,10 @@ namespace e2ee {
   
   char convert_forward(const char& c);
   char convert_reverse(const char& c);
-  
-  mp_limb_t *str_to_limbs(const std::string::const_iterator begin, const std::string::const_iterator end, size_t* limbs);
+
+  std::unique_ptr<mp_limb_t> str_to_limbs(
+          const std::string::const_iterator begin,
+          const std::string::const_iterator end, size_t* limbs);
   
   typedef std::unique_ptr<__mpz_struct, std::function<void(__mpz_struct*)>> afgh_mpz_t;
   afgh_mpz_t str_to_mpz(const std::string::const_iterator begin,

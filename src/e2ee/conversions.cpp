@@ -79,14 +79,14 @@ namespace e2ee {
     return std::make_unique<std::string>(&buffer[0]);
   }
   
-  mp_limb_t *str_to_limbs(const std::string::const_iterator begin,
+  std::unique_ptr<mp_limb_t> str_to_limbs(const std::string::const_iterator begin,
                           const std::string::const_iterator end,
                           size_t* limbs) {
     std::vector<unsigned char> strTemp(std::distance(begin, end));
     std::transform(begin, end, strTemp.begin(), convert_reverse);
-    mp_limb_t* m = allocate_unmanaged<mp_limb_t>(strTemp.size()+1);
+    mp_limb_t* m = new mp_limb_t[strTemp.size()+1]();
     *limbs = mpn_set_str(m, &strTemp[0], strTemp.size(), CONVERSION_BASE);
-    return m;
+    return std::unique_ptr<mp_limb_t>(m);
   }
   
   afgh_mpz_t

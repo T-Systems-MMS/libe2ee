@@ -47,6 +47,7 @@ namespace e2ee {
     std::shared_ptr<CurveField> construct(struct json_object* jobj, std::shared_ptr<ObjectCatalog>& catalog, const boost::uuids::uuid& id);
     
     percent_t finalize() override;
+    bool isValid() const override;
     
     void updateMembers() override;
     

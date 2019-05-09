@@ -22,10 +22,19 @@
 #include <pbc.h>
 #include <gmp.h>
 #include <iostream>
+#include <sstream>
 
 namespace e2ee {
   
   boost::uuids::random_generator PbcObject::gen;
+
+  boost::uuids::uuid
+  PbcObject::idOf(const void* item) {
+    static boost::uuids::name_generator_latest gen(boost::uuids::ns::url());
+    std::stringstream ss;
+    ss << "urn:address:" << std::hex << item;
+    return gen(ss.str());
+}
   
   void
   PbcObject::readValueFromJson(struct json_object * jobj, const JsonKey& key, mpz_ptr dst) {

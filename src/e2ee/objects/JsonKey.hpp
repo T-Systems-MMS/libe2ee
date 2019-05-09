@@ -62,6 +62,9 @@ namespace e2ee {
   const static JsonKey KEY_r("r");
   const static JsonKey KEY_phikonr("phikonr");
   const static JsonKey KEY_PAIRING("pairing");
+  const static JsonKey KEY_Eq("Eq");
+  const static JsonKey KEY_Fq("Fq");
+  const static JsonKey KEY_Fq2("Fq2");
 
 }
 #endif /* JsonKey_hpp */
