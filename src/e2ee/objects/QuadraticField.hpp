@@ -18,27 +18,39 @@
 #ifndef QuadraticField_hpp
 #define QuadraticField_hpp
 
-#include <e2ee/objects/SubField.hpp>
 #include <memory>
+#include <e2ee/objects/SubField.hpp>
 
 namespace e2ee {
-  
-  class QuadraticField : public SubField<QuadraticField> {
-  public:
-    static constexpr char TYPE_ID[] = "field";
-    static constexpr char SUBTYPE_ID[] = "fi";
-    
-    QuadraticField() = delete;
-    QuadraticField(const QuadraticField&) = delete;
-    QuadraticField& operator=(const QuadraticField&) = delete;
-    
-    QuadraticField(field_ptr field, std::shared_ptr<ObjectCatalog>& catalog, bool isFinal, const boost::uuids::uuid& id)
-    : SubField(field, catalog, isFinal, id) {}
-    
-  protected:
-    percent_t initField() override;
-  };
-  
+
+class QuadraticField :
+        public PbcObjectTypeIdentifier<TYPE_FIELD, SUBTYPE_QUADRATIC>,
+        public SubField<QuadraticField> {
+ public:
+
+  QuadraticField() = delete;
+  QuadraticField(const QuadraticField &) = delete;
+  QuadraticField &operator=(const QuadraticField &) = delete;
+
+  QuadraticField(
+          std::shared_ptr<PbcContext> context,
+          const boost::uuids::uuid &id,
+          const field_s *field,
+          bool isFinal) :
+          PbcObject(context, id, isFinal),
+          SubField(context, field) {}
+
+  QuadraticField(
+          std::shared_ptr<PbcContext> context,
+          const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values,
+          const boost::uuids::uuid &id,
+          const rapidjson::Value &value)
+          : PbcObject(context, id, false), SubField(context, value) {}
+
+ protected:
+  percent_t initField() override;
+};
+
 }
 
 #endif /* QuadraticField_hpp */

@@ -21,42 +21,42 @@
 #include <e2ee/objects/GlobalParameters.hpp>
 
 namespace e2ee {
-  Tuple::Tuple( std::shared_ptr<Element>& message,
-                std::shared_ptr<Element>& publicKey,
-                std::shared_ptr<GlobalParameters>& global,
+  Tuple::Tuple( const std::shared_ptr<Element>& message,
+                const std::shared_ptr<Element>& publicKey,
+                const std::shared_ptr<GlobalParameters>& global,
                 bool secondLevel)
   :   secondLevel(secondLevel), global(global) {
-    auto k = std::make_unique<Element>(global->pairing()->getZr());
+    auto k = std::make_unique<Element>(global->lockedContext(), global->pairing()->Zr());
     k->randomize();
     
     if (secondLevel) {
-      c1 = *publicKey ^ *k;
+      _c1 = *publicKey ^ *k;
     } else {
-      std::shared_ptr<Element> g2 = *(global->g()) ^ *k;
-      c1 = global->pairing()->apply(publicKey, g2);
+      auto g2 = *(global->g()) ^ *k;
+      _c1 = global->pairing()->apply(publicKey, g2);
     }
     auto tmp = (*(global->Z()) ^ *k);
-    c2 = *message * *tmp;
+    _c2 = (*message) * (*tmp);
   }
   
-  Tuple::Tuple(std::shared_ptr<Element>& c1,
-               std::shared_ptr<Element>& c2,
+  Tuple::Tuple(const std::shared_ptr<Element>& c1,
+               const std::shared_ptr<Element>& c2,
                const Tuple& base,
                bool secondLevel)
-  :   c1(c1),
-      c2(c2),
+  :   _c1(c1),
+      _c2(c2),
       global(base.global),
       secondLevel(secondLevel) {
   }
-  
-  std::unique_ptr<Element> Tuple::decryptFirstLevel(const std::shared_ptr<Element>& secretKey) {
+
+  std::shared_ptr<Element> Tuple::decryptFirstLevel(const std::shared_ptr<Element>& secretKey) {
     if (secondLevel) { return nullptr; }
-    return *c2 / (*c1 ^(! *secretKey));
+    return *c2() / (*c1() ^(! *secretKey));
   }
-  
+
   std::unique_ptr<Tuple> Tuple::reEncrypt(const std::shared_ptr<Element>& rk) {
     if (! secondLevel) { return nullptr; }
-    std::shared_ptr<Element> _c1 = global->pairing()->apply(c1, rk);
-    return std::make_unique<Tuple>(_c1, c2, *this, false);
+    auto _c1 = global->pairing()->apply(c1(), rk);
+    return std::make_unique<Tuple>(_c1, c2(), *this, false);
   }
 }

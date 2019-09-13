@@ -27,22 +27,19 @@
 namespace e2ee {
   class KeyPair {
   public:
-    KeyPair(std::shared_ptr<Element>& secretKey,
-            std::shared_ptr<Element>& publicKey);
-    
-    KeyPair(std::shared_ptr<GlobalParameters>& global);
-    
-    std::unique_ptr<Element>
+    KeyPair(const std::shared_ptr<Element>& secretKey,
+            const std::shared_ptr<Element>& publicKey);
+
+    KeyPair(const std::shared_ptr<GlobalParameters>& global);
+
+    std::shared_ptr<Element>
     getReEncryptionKeyFor(const std::shared_ptr<Element>& receiverPublicKey);
-    
-          std::shared_ptr<Element>& getPublicKey()       { return publicKey; }
-    const std::shared_ptr<Element>& getPublicKey() const { return publicKey; }
-    
-          std::shared_ptr<Element>& getSecretKey()       { return secretKey; }
-    const std::shared_ptr<Element>& getSecretKey() const { return secretKey; }
+
+    std::shared_ptr<Element> getPublicKey() { return std::shared_ptr<Element>(publicKey); }
+    std::shared_ptr<Element> getSecretKey() { return std::shared_ptr<Element>(secretKey); }
   private:
-    std::shared_ptr<Element> secretKey;
-    std::shared_ptr<Element> publicKey;
+    std::weak_ptr<Element> secretKey;
+    std::weak_ptr<Element> publicKey;
   };
   
 }

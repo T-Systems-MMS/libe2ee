@@ -39,7 +39,7 @@ namespace e2ee {
     void put(field_ptr obj)   {put(obj, FIELD);}
     void put(pairing_ptr obj) {put(obj, PAIRING);}
 /*
-    std::shared_ptr<AbstractField> getField(field_ptr obj);
+    std::shared_ptr<AbstractField> getFieldId(field_ptr obj);
     std::shared_ptr<Element> getElement(element_ptr obj);
     std::shared_ptr<Pairing> getPairing(pairing_ptr obj);
 */

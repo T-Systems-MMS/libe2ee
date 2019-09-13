@@ -1,4 +1,6 @@
 /*
+ * Copyright 2018-2019 T-Systems Multimedia Solutions GmbH
+ *
  * This file is part of libe2ee.
  *
  * libe2ee is free software: you can redistribute it and/or modify
@@ -20,9 +22,8 @@
 
 #include <e2ee/errors.cpp>
 #include <e2ee/objects/PbcObject.hpp>
-#include <e2ee/ObjectCatalog.hpp>
+#include <e2ee/PbcContext.hpp>
 #include <pbc.h>
-#include <json-c/json_object.h>
 #include <string>
 #include <memory>
 #include <map>
@@ -33,71 +34,85 @@
 #include <boost/uuid/uuid_generators.hpp>
 
 namespace e2ee {
-  
-  template <class T>
-  class PbcObjectImpl : public PbcObject {
-  public:
-    PbcObjectImpl(const std::string& type,
-                  const std::string& subtype,
-                  bool isFinal,
-                  T* wrappedObject)
-    : PbcObject(idOf(wrappedObject), type, subtype, isFinal),
-      wrappedObject(wrappedObject), _nativeId(idOf(wrappedObject))
-      { }
-    
-    PbcObjectImpl(const std::string& type,
-                  const std::string& subtype,
-                  bool isFinal,
-                  T* wrappedObject,
-                  const boost::uuids::uuid& id)
-    : PbcObject(((id == boost::uuids::nil_uuid()) ? (idOf(wrappedObject)) : (id)), type, subtype, isFinal),
-    wrappedObject(wrappedObject), _nativeId(idOf(wrappedObject))
-    { }
-    
-    virtual ~PbcObjectImpl() { }
+class PbcContext;
 
-    T* get() throw() { return wrappedObject; }
-    const T* get() const throw() { return wrappedObject; }
-    
-    template <class E>
-    std::shared_ptr<E> getObject(const boost::uuids::uuid& id, bool requireFinal = false);
-    
-    template <class E>
-    std::shared_ptr<E> getObjectFromJson(const JsonKey& key, bool requireFinal = false);
-
-    const boost::uuids::uuid& nativeId() const noexcept override { return _nativeId; }
-  protected:
-    void set(T* w) throw() { wrappedObject = w; _nativeId = idOf(w); }
-    
-  private:
-    mutable
-    T* wrappedObject;
-
-    boost::uuids::uuid _nativeId;
-  };
-  
-  template <class T>
-  template <class E>
-  std::shared_ptr<E> PbcObjectImpl<T>::getObject(const boost::uuids::uuid& id,
-                               bool requireFinal) {
-    if (getObjectCatalog() == nullptr) {
-      return nullptr;
-    } else {
-      return std::dynamic_pointer_cast<E>(getObjectCatalog()->getObject(id, requireFinal));
+template<class T>
+class PbcObjectImpl : public virtual PbcObject {
+ public:
+  explicit PbcObjectImpl(const T *wrappedObject) :
+          wrappedObject(wrappedObject) {
+    const auto id = idOf(wrappedObject);
+    if (getId().is_nil()) {
+      setId((id.is_nil()) ? (idOf(wrappedObject)) : (id));
     }
+
+    setNativeId(idOf(wrappedObject));
   }
-  
-  template <class T>
-  template <class E>
-  std::shared_ptr<E> PbcObjectImpl<T>::getObjectFromJson(const JsonKey& key,
-                                       bool requireFinal) {
-    if (getJsonObject() != nullptr) {
-      if (auto catalog = getObjectCatalog().lock()) {
-        return std::dynamic_pointer_cast<E>(
-                catalog->getObjectFromJson(getJsonObject(), key, requireFinal));
-      }
+
+  virtual ~PbcObjectImpl() {}
+
+  T *get() throw() { return const_cast<T *>(wrappedObject); }
+
+  const T *get() const throw() { return wrappedObject; }
+
+  template<class E>
+  std::shared_ptr<E> getObject(const boost::uuids::uuid &id, bool requireFinal = false);
+
+  inline std::shared_ptr<AbstractField> fieldFromJson(
+          const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values,
+          const JsonKey &key, bool requireFinal = false) {
+    auto jobj = getJsonObject();
+    return lockedContext()->getFieldFromJson(values, *jobj, key, requireFinal);
+  }
+  inline std::shared_ptr<Element> elementFromJson(
+          const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values,
+          const JsonKey &key, bool requireFinal = false) {
+    auto jobj = getJsonObject();
+    return lockedContext()->getElementFromJson(values, *jobj, key, requireFinal);
+  }
+  inline std::shared_ptr<Pairing> pairingFromJson(
+          const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values,
+          const JsonKey &key, bool requireFinal = false) {
+    auto jobj = getJsonObject();
+    return lockedContext()->getPairingFromJson(values, *jobj, key, requireFinal);
+  }
+
+ protected:
+  void set(T *w) throw() {
+    wrappedObject = w;
+    const auto id = idOf(wrappedObject);
+    if (getId().is_nil()) {
+      setId(id);
     }
-    afgh_throw_line("error in internal data types");
+
+    setNativeId(id);
+  }
+
+ private:
+  const T *wrappedObject;
+};
+
+template<class T>
+template<class E>
+std::shared_ptr<E> PbcObjectImpl<T>::getObject(const boost::uuids::uuid &id,
+                                               bool requireFinal) {
+  if (getContext() == nullptr) {
+    return nullptr;
+  } else {
+    return std::dynamic_pointer_cast<E>(getContext()->getObject(id, requireFinal));
   }
 }
+/*
+template<class T>
+template<class E>
+object_ref<E> PbcObjectImpl<T>::getObjectFromJson(const JsonKey &key,
+                                                       bool requireFinal) {
+  afgh_check(hasJsonObject(), "error in internal data types");
+  return std::dynamic_pointer_cast<E>(
+          lockedContext()->getObjectFromJson(getJsonObject(), key, requireFinal));
+
+  afgh_throw_line("no object context available");
+}
+ */
+}  // namespace e2ee
 #endif /* afgh_pbc_wrapper_hpp */

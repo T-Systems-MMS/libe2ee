@@ -1,4 +1,6 @@
 /*
+ * Copyright 2018-2019 T-Systems Multimedia Solutions GmbH
+ *
  * This file is part of libe2ee.
  *
  * libe2ee is free software: you can redistribute it and/or modify
@@ -15,16 +17,32 @@
  * along with libe2ee.  If not, see <http://www.gnu.org/licenses/lgpl>.
  */
 
-#include <e2ee/objects/QuadraticField.hpp>
-#include <e2ee/objects/PbcObjectImpl.hpp>
-extern "C" {
-#include <pbc_fieldquadratic.h>
-}
+#ifndef SRC_E2EE_UUID_HPP_
+#define SRC_E2EE_UUID_HPP_
+
+#include <string>
+#include <boost/uuid/uuid.hpp>
 
 namespace e2ee {
-  
-  percent_t QuadraticField::initField() {
-    field_init_fi(get(), superField()->get());
-    return 100;
+boost::uuids::uuid parse_uuid(const std::string &maybe_uuid,
+        bool force_valid = false) {
+  static boost::uuids::string_generator gen;
+
+  try {
+    auto result = gen(maybe_uuid);
+    if (result.version() != uuid::version_unknown) {
+      return result;
+    } else if (force_valid) {
+      afgh_throw_line("invalid UUID");
+    }
+  } catch (...) {
+    if (force_valid) {
+      throw;
+    }
+    /* ignore and return nil_uuid below */
   }
+  return boost::uuids::nil_uuid();
 }
+}  // namespace e2ee
+
+#endif  // SRC_E2EE_UUID_HPP_

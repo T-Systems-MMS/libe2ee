@@ -18,52 +18,50 @@
 #ifndef AbstractField_hpp
 #define AbstractField_hpp
 
-#include <e2ee/objects/PbcObjectImpl.hpp>
-#include <e2ee/objects/Element.hpp>
-#include <e2ee/memory.hpp>
 #include <pbc.h>
 #include <string>
 #include <memory>
+#include <map>
+#include <e2ee/objects/PbcObjectImpl.hpp>
+#include <e2ee/objects/Element.hpp>
+#include <e2ee/memory.hpp>
 
 namespace e2ee {
 
-  typedef const field_ptr field_cptr;
-  
-  class AbstractField : public PbcObjectImpl<struct field_s>{
-  public:
-    
-    AbstractField(const std::string& subtype,
-                  bool isFinal,
-                  field_ptr field,
-                  std::shared_ptr<ObjectCatalog>& catalog,
-                  const boost::uuids::uuid& id)
-    : PbcObjectImpl<struct field_s>("field", subtype, isFinal, field, id)
-    {setObjectCatalog(catalog);}
-    
-    static
-    std::shared_ptr<AbstractField> constructFromNative(field_ptr ptr, std::shared_ptr<ObjectCatalog>& catalog);
-    
-    virtual ~AbstractField() {}
-    
-    virtual bool operator==(const PbcObject& other) const override {
-      return operator==(static_cast<const AbstractField&>(other));
-    }
-    virtual bool operator==(const AbstractField& other) const;
-    
-    static void
-    fillJsonObject(json_object* jobj, field_cptr field);
-    
-    static bool compareField(field_cptr f1, field_cptr f2, std::shared_ptr<ObjectCatalog>&);
-    virtual void updateMembers() {}
-  protected:
-    
-    static field_ptr
-    parse_native(struct json_object* jobj);
-    
-  private:
-    static const std::string typeId;
-  };
-  
-}
+typedef const field_ptr field_cptr;
+class FieldFactory;
+class PbcContext;
+
+class AbstractField :
+        public PbcObjectImpl<struct field_s>,
+        public PbcComparable<AbstractField> {
+ public:
+
+  explicit AbstractField(const field_s* field):
+    PbcObjectImpl<struct field_s>(field) {
+  }
+
+  explicit AbstractField(const rapidjson::Value &value)
+          : AbstractField(parse_native(value)) {
+
+  }
+
+  virtual ~AbstractField() {}
+
+  bool equals(const AbstractField &other) const;
+  virtual void updateMembers() = 0;
+
+  void
+  fillJsonObject(json_object *root,json_object *jobj, field_cptr field) const;
+
+  static bool compareField(field_cptr f1, field_cptr f2, std::weak_ptr<PbcContext>);
+
+ protected:
+
+  static field_ptr
+  parse_native(const rapidjson::Value& jobj);
+};
+
+}  // namespace e2ee
 
 #endif /* AbstractField_hpp */

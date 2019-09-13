@@ -1,4 +1,6 @@
 /*
+ * Copyright 2018-2019 T-Systems Multimedia Solutions GmbH
+ *
  * This file is part of libe2ee.
  *
  * libe2ee is free software: you can redistribute it and/or modify
@@ -15,60 +17,63 @@
  * along with libe2ee.  If not, see <http://www.gnu.org/licenses/lgpl>.
  */
 
-#ifndef CurveField_hpp
-#define CurveField_hpp
+#ifndef SRC_E2EE_OBJECTS_CURVEFIELD_HPP_
+#define SRC_E2EE_OBJECTS_CURVEFIELD_HPP_
 
+#include <pbc.h>
+#include <memory>
 #include <e2ee/objects/CurveField.hpp>
 #include <e2ee/objects/AbstractField.hpp>
 #include <e2ee/objects/Element.hpp>
-#include <pbc.h>
-#include <memory>
 
 namespace e2ee {
-  
-  class CurveField : public AbstractField, public std::enable_shared_from_this<CurveField> {
-  public:
-    CurveField() = delete;
-    CurveField(const CurveField&) = delete;
-    CurveField& operator=(const CurveField&) = delete;
-    
-    CurveField(field_ptr field, std::shared_ptr<ObjectCatalog>& catalog, bool isFinal, const boost::uuids::uuid& id);
-    
-    bool equals(const std::shared_ptr<PbcObject>& other) const override;
-    
-    virtual bool operator==(const PbcObject& other) const override {
-      return operator==(dynamic_cast<const CurveField&>(other));
-    }
-    bool operator==(const CurveField& other) const;
-    
-    json_object* toJson(json_object* root, bool returnIdOnly) const override;
-    
-    static
-    std::shared_ptr<CurveField> construct(struct json_object* jobj, std::shared_ptr<ObjectCatalog>& catalog, const boost::uuids::uuid& id);
-    
-    percent_t finalize() override;
-    bool isValid() const override;
-    
-    void updateMembers() override;
-    
-    void
-    set_gen_no_cofac(std::shared_ptr<Element> gen_no_cofac);
-    
-    void
-    set_gen(std::shared_ptr<Element> gen);
-    
-  private:
-    void updateElement(std::shared_ptr<Element>& dst, element_ptr e);
-    
-    std::shared_ptr<Element> a;
-    std::shared_ptr<Element> b;
-    std::shared_ptr<__mpz_struct> cofac;
-    std::shared_ptr<Element> gen_no_cofac;
-    std::shared_ptr<Element> gen;
-    bool initialized;
-    
-  };
-  
-}
 
-#endif /* CurveField_hpp */
+class CurveField :
+        public PbcObjectTypeIdentifier<TYPE_FIELD, SUBTYPE_CURVE>,
+        public virtual AbstractField, public virtual PbcComparable<CurveField> {
+ public:
+  using AbstractField::isFinal;
+
+  CurveField() = delete;
+  CurveField(CurveField &&) = delete;
+  CurveField(const CurveField &) = delete;
+  CurveField &operator=(CurveField &&) = delete;
+  CurveField &operator=(const CurveField &) = delete;
+
+  CurveField(std::shared_ptr<PbcContext> context, const boost::uuids::uuid &id,
+             const field_s* field, bool isFinal);
+
+  CurveField(std::shared_ptr<PbcContext> context,
+             const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values,
+             const boost::uuids::uuid &id,
+             const rapidjson::Value &value);
+
+  bool equals(const CurveField &other) const final;
+
+  json_object *toJson(json_object *root, bool returnIdOnly) const override;
+
+  percent_t finalize(
+          const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values) override;
+
+  bool isValid() const override;
+
+  void updateMembers() override;
+
+  void
+  set_gen_no_cofac(const std::shared_ptr<Element>& gen_no_cofac);
+
+  void
+  set_gen(const std::shared_ptr<Element>& gen);
+
+ private:
+  std::weak_ptr<Element> a;
+  std::weak_ptr<Element> b;
+  std::weak_ptr<Element> gen_no_cofac;
+  std::weak_ptr<Element> gen;
+  // std::shared_ptr<__mpz_struct> cofac;
+  bool initialized;
+};
+
+}  // namespace e2ee
+
+#endif  // SRC_E2EE_OBJECTS_CURVEFIELD_HPP_

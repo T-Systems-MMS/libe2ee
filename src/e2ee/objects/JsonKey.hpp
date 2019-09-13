@@ -1,4 +1,6 @@
 /*
+ * Copyright 2018-2019 T-Systems Multimedia Solutions GmbH
+ *
  * This file is part of libe2ee.
  *
  * libe2ee is free software: you can redistribute it and/or modify
@@ -15,56 +17,74 @@
  * along with libe2ee.  If not, see <http://www.gnu.org/licenses/lgpl>.
  */
 
-#ifndef JsonKey_hpp
-#define JsonKey_hpp
+#ifndef SRC_E2EE_OBJECTS_JSONKEY_HPP_
+#define SRC_E2EE_OBJECTS_JSONKEY_HPP_
 
-#include <string>
+#include <string_view>
 
 namespace e2ee {
-  class JsonKey {
-  public:
-    JsonKey() = delete;
-    explicit JsonKey(const std::string& name) : value(name) {}
-    const std::string& str() const noexcept { return value; }
-    const char* c_str() const noexcept { return value.c_str(); }
-    
-    bool operator==(const JsonKey& key) const noexcept { return value == key.value; }
-    bool operator!=(const JsonKey& key) const noexcept { return value != key.value; }
-    bool operator==(const std::string& key) const noexcept { return value == key; }
-    bool operator!=(const std::string& key) const noexcept { return value != key; }
-  private:
-    std::string value;
-  };
+class JsonKey {
+ public:
+  JsonKey() = delete;
 
-  const static JsonKey KEY_ID("id");
-  const static JsonKey KEY_TYPE("type");
-  const static JsonKey KEY_SUBTYPE("subtype");
-  const static JsonKey KEY_ORDER("order");
-  const static JsonKey KEY_ROOT("root");
-  const static JsonKey KEY_FIELD("field");
-  const static JsonKey KEY_BASE("base");
-  const static JsonKey KEY_MODULUS("modulus");
-  const static JsonKey KEY_A("a");
-  const static JsonKey KEY_B("b");
-  const static JsonKey KEY_x("x");
-  const static JsonKey KEY_y("y");
-  const static JsonKey KEY_GEN("gen");
-  const static JsonKey KEY_GENNOCOFAC("gen_no_cofac");
-  const static JsonKey KEY_COFAC("cofac");
-  const static JsonKey KEY_QUOTIENTCMP("quotient_cmp");
-  const static JsonKey KEY_NEGPINV("negpinv");
-  const static JsonKey KEY_R("R");
-  const static JsonKey KEY_R3("R3");
-  const static JsonKey KEY_G1("G1");
-  const static JsonKey KEY_G2("G2");
-  const static JsonKey KEY_GT("GT");
-  const static JsonKey KEY_Zr("Zr");
-  const static JsonKey KEY_r("r");
-  const static JsonKey KEY_phikonr("phikonr");
-  const static JsonKey KEY_PAIRING("pairing");
-  const static JsonKey KEY_Eq("Eq");
-  const static JsonKey KEY_Fq("Fq");
-  const static JsonKey KEY_Fq2("Fq2");
+  explicit constexpr JsonKey(const std::string_view& name) noexcept
+  : value(name) {}
 
-}
-#endif /* JsonKey_hpp */
+  const std::string_view &str() const noexcept { return value; }
+  const char *c_str() const noexcept { return value.data(); }
+
+  operator const std::string_view &() const noexcept { return value; }
+  operator const char *() const noexcept { return value.data(); }
+
+  bool operator==(const JsonKey &key) const noexcept {
+    return value == key.value;
+  }
+
+  bool operator!=(const JsonKey &key) const noexcept {
+    return value != key.value;
+  }
+
+  bool operator==(const std::string_view &key) const noexcept {
+    return value == key;
+  }
+
+  bool operator!=(const std::string_view &key) const noexcept {
+    return value != key;
+  }
+
+ private:
+  std::string_view value;
+};
+
+static constexpr JsonKey KEY_ID("id");                      // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_TYPE("type");                  // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_SUBTYPE("subtype");            // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_ORDER("order");                // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_ROOT("root");                  // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_FIELD("field");                // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_BASE("base");                  // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_MODULUS("modulus");            // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_A("a");                        // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_B("b");                        // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_x("x");                        // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_y("y");                        // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_GEN("gen");                    // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_GENNOCOFAC("gen_no_cofac");    // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_COFAC("cofac");                // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_QUOTIENTCMP("quotient_cmp");   // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_NEGPINV("negpinv");            // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_R("R");                        // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_R3("R3");                      // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_G1("G1");                      // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_G2("G2");                      // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_GT("GT");                      // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_Zr("Zr");                      // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_r("r");                        // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_phikonr("phikonr");            // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_PAIRING("pairing");            // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_Eq("Eq");                      // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_Fq("Fq");                      // NOLINT: cert-err58-cpp
+static constexpr JsonKey KEY_Fq2("Fq2");                    // NOLINT: cert-err58-cpp
+
+}  // namespace e2ee
+#endif  // SRC_E2EE_OBJECTS_JSONKEY_HPP_

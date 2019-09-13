@@ -18,6 +18,7 @@
 #ifndef Pairing_hpp
 #define Pairing_hpp
 
+#include <memory>
 #include <e2ee/objects/PbcObjectImpl.hpp>
 #include <e2ee/objects/AbstractField.hpp>
 #include <e2ee/objects/MultiplicativeSubgroup.hpp>
@@ -25,72 +26,66 @@
 #include <pbc.h>
 
 namespace e2ee {
-  class Element;
-  
-  class Pairing
-  : public PbcObjectImpl<struct pairing_s> {
-  public:
+class Element;
 
-    Pairing(pairing_ptr pairing, bool isFinal,
-            const boost::uuids::uuid& id = boost::uuids::nil_uuid());
+class Pairing :
+        public PbcObjectTypeIdentifier<TYPE_PAIRING, SUBTYPE_GENERIC>,
+        public PbcObjectImpl<struct pairing_s>,
+                public PbcComparable<Pairing> {
+ public:
+  Pairing(std::shared_ptr<PbcContext> context,
+          const boost::uuids::uuid &id, const pairing_s *pairing, bool isFinal);
 
-    static
-    std::shared_ptr<Pairing> generate(int32_t rBits, int32_t qBits,
-            const boost::uuids::uuid& id = boost::uuids::nil_uuid());
-    
-    virtual ~Pairing();
+  Pairing(std::shared_ptr<PbcContext> context, const pairing_s *pairing, bool isFinal) :
+          Pairing(context, boost::uuids::nil_uuid(), pairing, isFinal) {}
 
-    static
-    std::shared_ptr<AbstractField> loadFieldSafely(field_ptr ptr, std::shared_ptr<ObjectCatalog>& catalog);
-    
-    std::shared_ptr<Element> initG1();
-    std::shared_ptr<Element> initG2();
-    std::shared_ptr<Element> initGT();
-    std::shared_ptr<Element> initZr();
-    
-    std::unique_ptr<Element> apply(const std::shared_ptr<Element>& g1,
-                                   const std::shared_ptr<Element>& g2) const;
-    
-    bool equals(const std::shared_ptr<PbcObject>& other) const override;
-    
-    virtual bool operator==(const PbcObject& other) const override {
-      return operator==(dynamic_cast<const Pairing&>(other));
-    }
-    virtual bool operator==(const Pairing& other) const;
-    
-    struct json_object*
-    toJson(struct json_object* root, bool returnIdOnly = false) const override;
-    
-    static
-    std::shared_ptr<Pairing> construct(struct json_object* jobj, std::shared_ptr<ObjectCatalog>& catalog, const boost::uuids::uuid& id);
-    
-    percent_t finalize() override;
+  Pairing(std::shared_ptr<PbcContext> context,
+          const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values,
+          const boost::uuids::uuid &id,
+          const rapidjson::Value &value);
 
-    bool isFinal() const throw() override { return PbcObject::isFinal(); }
-    
-    std::shared_ptr<AbstractField> getG1() const throw() { return G1; }
-    std::shared_ptr<AbstractField> getG2() const throw() { return G2; }
-    std::shared_ptr<MultiplicativeSubgroup> getGT() const throw() { return GT; }
-    std::shared_ptr<MontFPField> getZr() const throw() { return Zr; }
-    
-  protected:
-    void isFinal(bool f) override;
-    
-  private:
-    mutable
-    std::shared_ptr<ObjectCatalog> catalog;
-    
-    std::shared_ptr<AbstractField> G1;
-    std::shared_ptr<AbstractField> G2;
-    std::shared_ptr<MultiplicativeSubgroup> GT;
-    std::shared_ptr<MontFPField> Zr;
+  Pairing(std::shared_ptr<PbcContext> context, int32_t rBits, int32_t qBits,
+          const boost::uuids::uuid &id = boost::uuids::nil_uuid());
 
-    std::shared_ptr<AbstractField> Eq;
-    std::shared_ptr<AbstractField> Fq;
-    std::shared_ptr<AbstractField> Fq2;
-    bool isGTinitialized = false;
-  };
-  
+ public:
+  virtual ~Pairing();
+
+  std::shared_ptr<Element> initG1();
+  std::shared_ptr<Element> initG2();
+  std::shared_ptr<Element> initGT();
+  std::shared_ptr<Element> initZr();
+  std::shared_ptr<Element> apply( const std::shared_ptr<Element> &g1,
+                                  const std::shared_ptr<Element> &g2) const;
+
+  bool equals(const Pairing &other) const final;
+
+  struct json_object *
+  toJson(struct json_object *root, bool returnIdOnly = false) const override;
+
+  percent_t finalize(
+          const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values) override;
+
+  bool isFinal() const throw() override { return PbcObject::isFinal(); }
+
+ protected:
+  void isFinal(bool f) override;
+
+ private:
+  int initMethod = 0;
+  PROPERTY(AbstractField, G1);
+  PROPERTY(AbstractField, G2);
+  PROPERTY(AbstractField, GT);
+  PROPERTY(AbstractField, Zr);
+
+  PROPERTY(AbstractField, Eq);
+  PROPERTY(AbstractField, Fq);
+  PROPERTY(AbstractField, Fq2);
+
+  bool isGTinitialized = false;
+
+  void initFields(const std::shared_ptr<PbcContext> &ctx, const pairing_s *ptr);
+};
+
 }
 
 #endif /* Pairing_hpp */

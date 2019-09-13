@@ -22,31 +22,38 @@
 #include <memory>
 
 namespace e2ee {
-  
-class MultiplicativeSubgroup : public SubField<MultiplicativeSubgroup> {
-  public:
-    static constexpr char TYPE_ID[] = "mulg";
-    static constexpr char SUBTYPE_ID[] = "";
-    
-    MultiplicativeSubgroup() = delete;
-    MultiplicativeSubgroup(const MultiplicativeSubgroup&) = delete;
-    MultiplicativeSubgroup& operator=(const MultiplicativeSubgroup&) = delete;
-    
-    MultiplicativeSubgroup(field_ptr field,
-                           std::shared_ptr<ObjectCatalog>& catalog,
-                           bool isFinal,
-                           const boost::uuids::uuid& id);
-    
-    virtual json_object* toJson(json_object* root, bool returnIdOnly = false) const override;
-    std::weak_ptr<Pairing> getPairing() const { return pairing; }
 
+class MultiplicativeSubgroup :
+        public PbcObjectTypeIdentifier<TYPE_FIELD, SUBTYPE_MULTIPLICATIVE>,
+        public SubField<MultiplicativeSubgroup> {
+ public:
+  MultiplicativeSubgroup() = delete;
+  MultiplicativeSubgroup(const MultiplicativeSubgroup &) = delete;
+  MultiplicativeSubgroup &operator=(const MultiplicativeSubgroup &) = delete;
+
+  MultiplicativeSubgroup(
+          std::shared_ptr<PbcContext> context,
+          const boost::uuids::uuid &id,
+          const field_s *field,
+          bool isFinal);
+
+  MultiplicativeSubgroup(std::shared_ptr<PbcContext> context,
+                         const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values,
+                         const boost::uuids::uuid &id,
+                         const rapidjson::Value &value)
+          : PbcObject(context, id, false),
+          SubField(context, value) {}
+
+  virtual json_object *toJson(json_object *root, bool returnIdOnly = false) const override;
 
   virtual void updateMembers() override;
-    
-  private:
-    std::weak_ptr<Pairing> pairing;
-  };
-  
+
+  percent_t finalize(
+          const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>> &values) override;
+ private:
+  PROPERTY(Pairing, pairing);
+};
+
 }
 
 #endif /* MultiplicativeGroup_h */

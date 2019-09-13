@@ -20,18 +20,32 @@
 #include <gmp.h>
 
 namespace e2ee {
-  
-  GlobalParameters::GlobalParameters(int32_t rBits, int32_t qBits) {
 
-    pbc_set_memory_functions(e2ee_malloc, e2ee_realloc, e2ee_free);
-    mp_set_memory_functions(e2ee_malloc, e2ee_realloc2, e2ee_free2);
-    _pairing = e2ee::Pairing::generate(160, 512);
-    _g = _pairing->initG1();
-    _g->randomize();
-    _Z = _pairing->apply(_g, _g);
-    
-    assert(_pairing->isFinal());
-    assert(_g->isFinal());
-    assert(_Z->isFinal());
+GlobalParameters::GlobalParameters(std::weak_ptr<PbcContext> ctx, int32_t rBits, int32_t qBits):
+  context(ctx) {
+
+  pbc_set_memory_functions(e2ee_malloc, e2ee_realloc, e2ee_free);
+  mp_set_memory_functions(e2ee_malloc, e2ee_realloc2, e2ee_free2);
+  if (auto c = ctx.lock()) {
+    auto p = c->createPairing(160, 512);
+    _pairing = p;
+
+    auto g = p->initG1();
+    g->randomize();
+    _g = g;
+
+    auto Z = p->apply(g, g);
+    _Z = Z;
+
+    assert(p->isFinal());
+    assert(g->isFinal());
+    assert(Z->isFinal());
+    assert(p->G1()->isFinal());
+    assert(p->G2()->isFinal());
+    assert(p->GT()->isFinal());
+    assert(p->Zr()->isFinal());
+  } else {
+    afgh_throw_line("unable to acquire context lock");
   }
 }
+}  // namespace e2ee

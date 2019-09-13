@@ -16,9 +16,11 @@
 class ElementTest : public ::testing::Test {
 protected:
   void SetUp() {
-    global = std::make_shared<e2ee::GlobalParameters>(160, 512);
+    context = e2ee::PbcContext::createInstance();
+    global = std::make_shared<e2ee::GlobalParameters>(context, 160, 512);
   }
-  
+
+  std::shared_ptr<e2ee::PbcContext> context;
   std::shared_ptr<e2ee::GlobalParameters> global;
 };
 

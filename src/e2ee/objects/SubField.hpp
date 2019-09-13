@@ -24,83 +24,108 @@
 #include <memory>
 
 namespace e2ee {
-  /* field that is defined by another field */
-  template <class F>
-  class SubField : public AbstractField {
-  public:
-    SubField() = delete;
-    SubField(const SubField&) = delete;
-    SubField& operator=(const SubField&) = delete;
-    
-    SubField(field_ptr field, std::shared_ptr<ObjectCatalog>& catalog, bool isFinal, const boost::uuids::uuid& id)
-    : AbstractField(F::SUBTYPE_ID, isFinal, field, catalog, id) {
-      if (isFinal) {
-        field_ptr superfield = reinterpret_cast<field_ptr>(field->data);
-        assert(superfield != nullptr);
-        setSuperField(constructFromNative(superfield, catalog));
-        assert(hasSuperField());
+/* field that is defined by another field */
+template<class F>
+class SubField :
+        public AbstractField,
+        public PbcComparable<SubField<F>> {
+ public:
+  using AbstractField::isFinal;
+  using PbcComparable<SubField<F>>::operator==;
+
+  SubField() = delete;
+
+  SubField(const SubField &) = delete;
+
+  SubField &operator=(const SubField &) = delete;
+
+  SubField(std::shared_ptr<PbcContext>& context, const field_s *field)
+          : AbstractField(field) {
+    if (isFinal()) {
+      auto superfield = reinterpret_cast<field_ptr>(field->data);
+      assert(superfield != nullptr);
+      set_superField(context->fromNative(superfield));
+      assert(has_superField());
+    }
+  }
+
+  SubField(std::weak_ptr<PbcContext> context, const rapidjson::Value &value)
+          : AbstractField(value) {
+    if (auto ctx = context.lock()) {   // do not use lockedContext() in ctor !!!!
+      auto superfield = reinterpret_cast<field_ptr>(get()->data);
+      if (superfield != nullptr) {
+        set_superField(ctx->fromNative(superfield));
+        assert(has_superField());
       }
     }
-    
-    virtual bool equals(const std::shared_ptr<PbcObject>& other) const override;
-    
-    static std::shared_ptr<F>
-    construct(struct json_object* jobj, std::shared_ptr<ObjectCatalog>& catalog, const boost::uuids::uuid& id) {
-      return std::make_shared<F>(parse_native(jobj), catalog, false, id);
-    }
-    
-    virtual percent_t finalize() override;
-    
-    bool hasSuperField() const throw() { return superField != nullptr; }
-    std::shared_ptr<AbstractField> getSuperField() throw() { return superField; }
-    const std::shared_ptr<AbstractField> getSuperField() const throw() { return superField; }
-    void setSuperField(std::shared_ptr<AbstractField> sf) {superField = sf;}
-    
-    virtual json_object* toJson(json_object* root, bool returnIdOnly = false) const override;
-    
-    virtual void isFinal(bool f) override { AbstractField::isFinal(f); }
-    virtual bool isFinal() const noexcept override { return AbstractField::isFinal(); }
-  protected:
-    virtual percent_t initField() { field_init(get()); return 100; }
-    
-  private:
-    std::shared_ptr<AbstractField> superField;
-  };
-  
-  template <class F>
-  percent_t SubField<F>::finalize() {
-    assert(!AbstractField::isFinal());
-    superField = getObjectFromJson<AbstractField>(KEY_BASE);
-    get()->data = superField.get();
-    
-    percent_t status = initField();
-    isFinal(status == 100);
-    return status;
   }
-  
-  template <class F>
-  struct json_object*
-  SubField<F>::toJson(struct json_object* root, bool returnIdOnly) const {
-    json_object* jobj = getJsonStub(root, getId());
-    if (jobj) { RETURN_JSON_OBJECT(jobj, getId(), returnIdOnly); }
-    else      { jobj = createJsonStub(root, getId()); }
-    
-    fillJsonObject(jobj, const_cast<field_ptr>(get()));
-    
-    assert(hasSuperField());
-    addJsonObject(jobj, KEY_BASE, getSuperField()->toJson(root, true));
-    RETURN_JSON_OBJECT(jobj, getId(), returnIdOnly);
+
+  bool equals(const SubField<F> &other) const final;
+  void updateMembers() override {}
+
+  percent_t finalize(
+          const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>> &values) override;
+
+  virtual json_object *toJson(json_object *root, bool returnIdOnly = false) const override;
+
+  virtual void isFinal(bool f) override { AbstractField::isFinal(f); }
+
+  virtual bool isFinal() const noexcept override { return AbstractField::isFinal(); }
+
+ protected:
+  virtual percent_t initField() {
+    field_init(get());
+    return 100;
   }
-  
-  template <class F>
-  bool SubField<F>::equals(const std::shared_ptr<PbcObject>& other) const {
-    FAIL_UNLESS(isFinal());
-    std::shared_ptr<SubField<F> > o = std::dynamic_pointer_cast<SubField<F> >(other);
-    FAIL_UNLESS(o != nullptr);
-    FAIL_UNLESS(o->isFinal());
-    FAIL_IF(std::strcmp(get()->name, o->get()->name));
-    return (getSuperField()->equals(o->getSuperField()));
+
+ private:
+  PROPERTY(AbstractField, superField);
+};
+
+template<class F>
+percent_t SubField<F>::finalize(
+        const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>> &values) {
+  assert(!isFinal());
+  try {
+    /*
+     * do not require finalization here
+     */
+    set_superField(fieldFromJson(values, KEY_BASE, false));
+  } catch(AfghError& e) {
+    isFinal(false);
+    return 50;
+  }
+  get()->data = superField()->get();
+
+  percent_t status = initField();
+  isFinal(status == 100);
+  return status;
+}
+
+template<class F>
+struct json_object *
+SubField<F>::toJson(struct json_object *root, bool returnIdOnly) const {
+  json_object *jobj = getJsonStub(root, getId());
+  if (jobj) { RETURN_JSON_OBJECT(jobj, getId(), returnIdOnly); }
+  else { jobj = createJsonStub(root, getId()); }
+
+  fillJsonObject(root, jobj, const_cast<field_ptr>(get()));
+
+  assert(has_superField());
+  addJsonObject(jobj, KEY_BASE, superField()->toJson(root, true));
+  RETURN_JSON_OBJECT(jobj, getId(), returnIdOnly);
+}
+
+
+template<class F>
+bool SubField<F>::equals(const SubField<F> &other) const {
+  if (AbstractField::equals(other)) {
+    return (superField()->PbcComparable<AbstractField>::equals(other.superField()));
+  } else {
+    return false;
   }
 }
+
+}  // nmaespace e2ee
 
 #endif /* SubField_hpp */

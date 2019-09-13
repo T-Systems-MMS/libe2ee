@@ -41,6 +41,9 @@ private:
 };
 
 
-#define afgh_throw_line(args...) throw AfghError( __FILE__, __LINE__, args)
+#define afgh_throw_line(args...) \
+  throw AfghError(__FILE__, __LINE__, args)
+#define afgh_check(COND, args...) \
+  do {if (!(COND)) { afgh_throw_line(args); }} while (false)
 
 #endif /* afgh_errors_hpp */

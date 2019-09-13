@@ -20,21 +20,26 @@
 
 namespace e2ee {
   
-  KeyPair::KeyPair(std::shared_ptr<Element>& secretKey,
-                   std::shared_ptr<Element>& publicKey)
+  KeyPair::KeyPair(const std::shared_ptr<Element>& secretKey,
+                   const std::shared_ptr<Element>& publicKey)
   : secretKey(secretKey), publicKey(publicKey) {
     
   }
   
-  KeyPair::KeyPair(std::shared_ptr<GlobalParameters>& global) {
-    secretKey = std::make_shared<Element>(global->pairing()->getZr());
-    secretKey->randomize();
-    publicKey = *(global->g()) ^ *secretKey;
-    assert(global->g()->getField()->equals(publicKey->getField()));
+  KeyPair::KeyPair(const std::shared_ptr<GlobalParameters>& global) {
+    auto sk = std::make_shared<Element>(global->lockedContext(),
+            global->pairing()->Zr());
+    global->lockedContext()->addObject(sk);
+    sk->randomize();
+
+    auto pk = *(global->g()) ^ *sk;
+    assert(global->g()->getField()->getId() == pk->getField()->getId());
+    secretKey = sk;
+    publicKey = pk;
   }
-  
-  std::unique_ptr<Element>
+
+  std::shared_ptr<Element>
   KeyPair::getReEncryptionKeyFor(const std::shared_ptr<Element>& receiverPublicKey) {
-    return *receiverPublicKey ^ ( ! *secretKey);
+    return (*receiverPublicKey) ^ (!(*getSecretKey()));
   }
 }

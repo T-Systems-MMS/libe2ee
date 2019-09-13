@@ -10,3 +10,12 @@
 [submodule "src/lib/json-c"]
 	path = src/lib/json-c
 	url = https://github.com/json-c/json-c.git
+[submodule "src/rapidjson"]
+	path = src/rapidjson
+	url = https://github.com/Tencent/rapidjson.git
+[submodule "src/lib/relic"]
+	path = src/lib/relic
+	url = https://github.com/relic-toolkit/relic.git
+[submodule "src/lib/aixlog"]
+	path = src/lib/aixlog
+	url = https://github.com/badaix/aixlog.git

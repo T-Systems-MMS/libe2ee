@@ -24,28 +24,31 @@
 #include <memory>
 
 namespace e2ee {
-  class Tuple {
-  public:
-    Tuple(std::shared_ptr<Element>& message,
-          std::shared_ptr<Element>& publicKey,
-          std::shared_ptr<GlobalParameters>& global,
-          bool secondLevel);
-    
-    Tuple(std::shared_ptr<Element>& c1,
-          std::shared_ptr<Element>& c2,
-          const Tuple& base,
-          bool secondLevel);
-    
-    std::unique_ptr<Element> decryptFirstLevel(const std::shared_ptr<Element>& secretKey);
-    
-    std::unique_ptr<Tuple> reEncrypt(const std::shared_ptr<Element>& rk);
-  private:
-    bool secondLevel;
-    std::shared_ptr<Element> c1;
-    std::shared_ptr<Element> c2;
-    
-    std::shared_ptr<GlobalParameters> global;
-  };
+class Tuple {
+ public:
+  Tuple(const std::shared_ptr<Element> &message,
+        const std::shared_ptr<Element> &publicKey,
+        const std::shared_ptr<GlobalParameters> &global,
+        bool secondLevel);
+
+  Tuple(const std::shared_ptr<Element> &c1,
+        const std::shared_ptr<Element> &c2,
+        const Tuple &base,
+        bool secondLevel);
+
+  std::shared_ptr<Element> decryptFirstLevel(const std::shared_ptr<Element> &secretKey);
+
+  std::unique_ptr<Tuple> reEncrypt(const std::shared_ptr<Element> &rk);
+
+ PROPERTY(Element, c1);
+ PROPERTY(Element, c2);
+
+ private:
+  bool secondLevel;
+
+
+  std::shared_ptr<GlobalParameters> global;
+};
 }
 
 #endif /* Tuple_hpp */

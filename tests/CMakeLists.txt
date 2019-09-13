@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 project(e2ee_test)
 
+add_compile_options("-fsanitize=address")
+add_link_options("-fsanitize=address")
+
 enable_testing()
 
 file(GLOB_RECURSE SRCS "${PROJECT_SOURCE_DIR}/*.cpp")

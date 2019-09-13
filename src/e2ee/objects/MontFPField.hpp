@@ -23,32 +23,38 @@
 
 namespace e2ee {
   
-  class MontFPField
-  : public  AbstractField {
+  class MontFPField:
+          public PbcObjectTypeIdentifier<TYPE_FIELD, SUBTYPE_MONTFP>,
+          public AbstractField, PbcComparable<MontFPField> {
   public:
-    static constexpr char TYPE_ID[] = "field";
-    static constexpr char SUBTYPE_ID[] = "montfp";
-    
+
     MontFPField() = delete;
     MontFPField(const MontFPField&) = delete;
     MontFPField& operator=(const MontFPField&) = delete;
     
-    MontFPField(field_ptr field, std::shared_ptr<ObjectCatalog>& catalog, bool isFinal, const boost::uuids::uuid& id)
-    : AbstractField (SUBTYPE_ID, isFinal, field, catalog, id) {}
-    
-    bool equals(const std::shared_ptr<PbcObject>& other) const override;
-    
-    bool operator==(const PbcObject& other) const override {
-      return operator==(dynamic_cast<const MontFPField&>(other));
-    }
-    bool operator==(const MontFPField& other) const;
-    
+    MontFPField(
+            std::shared_ptr<PbcContext> context,
+            const boost::uuids::uuid& id,
+            const field_s* field,
+            bool isFinal):
+            PbcObject(context, id, isFinal),
+            AbstractField (field) {}
+
+    MontFPField(std::shared_ptr<PbcContext> context,
+                const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values,
+                const boost::uuids::uuid &id,
+                const rapidjson::Value &value);
+
+    using PbcObjectTypeIdentifier::getType;
+    using PbcObjectTypeIdentifier::getSubtype;
+
+    bool equals(const MontFPField& other) const final;
+
     json_object* toJson(json_object* root, bool returnIdOnly = false) const override;
-    
-    static
-    std::shared_ptr<MontFPField> construct(struct json_object* jobj, std::shared_ptr<ObjectCatalog>& catalog, const boost::uuids::uuid& id);
-    
-    percent_t finalize() override { isFinal(true); return 100;}
+
+    void updateMembers() override {}
+    percent_t finalize(
+            const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values) override { isFinal(true); return 100;}
   };
   
 }

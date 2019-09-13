@@ -21,22 +21,25 @@
 #include <e2ee/objects/Pairing.hpp>
 #include <e2ee/objects/Element.hpp>
 #include <e2ee/objects/PbcObjectImpl.hpp>
-#include <e2ee/ObjectCatalog.hpp>
+#include <e2ee/PbcContext.hpp>
 #include <memory>
 
 namespace e2ee {
   class GlobalParameters {
   public:
-    GlobalParameters(int32_t rBits, int32_t qBits);
-    
-    std::shared_ptr<Pairing> pairing() { return _pairing; }
-    std::shared_ptr<Element> g() { return _g; }
-    std::shared_ptr<Element> Z() { return _Z; }
+    GlobalParameters(std::weak_ptr<PbcContext> ctx, int32_t rBits, int32_t qBits);
+
+    std::shared_ptr<Pairing> pairing() { return std::shared_ptr<Pairing>(_pairing); }
+    std::shared_ptr<Element> g() { return std::shared_ptr<Element>(_g); }
+    std::shared_ptr<Element> Z() { return std::shared_ptr<Element>(_Z); }
+
+    std::shared_ptr<PbcContext> lockedContext() { return context.lock(); }
     
   private:
-    std::shared_ptr<Pairing> _pairing;
-    std::shared_ptr<Element> _g;
-    std::shared_ptr<Element> _Z;
+    std::weak_ptr<PbcContext> context;
+    std::weak_ptr<Pairing> _pairing;
+    std::weak_ptr<Element> _g;
+    std::weak_ptr<Element> _Z;
   };
 }
 
