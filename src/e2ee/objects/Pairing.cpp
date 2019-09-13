@@ -24,6 +24,24 @@ extern "C" {
 #include <pbc.h>
 }
 
+#define INIT_FIELD(name, dst, src) do {\
+  if (!has_##name()) { \
+    set_##name(fieldFromJson(values, KEY_##name)); \
+  } \
+  status.push_back(has_##name()); \
+  \
+  if (has_##name()) { \
+    if (name()->isFinal()) { \
+      (dst) = (src); \
+      status.push_back(true); \
+    } else { \
+      status.push_back(false); \
+    } \
+  } else { \
+    status.push_back(false); \
+  } \
+  }while(0)
+
 namespace e2ee {
 
 class MultiplicativeSubgroup;
@@ -128,60 +146,42 @@ Pairing::toJson(json_object *root, bool returnIdOnly) const {
 percent_t
 Pairing::finalize(
         const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values) {
-  percent_t status = 0;
+  std::vector<bool> status;
+  auto pdata = reinterpret_cast<a_pairing_data_ptr>(get()->data);
   assert(!isFinal());
-
-  if (!has_G1()) {
-    set_G1(fieldFromJson(values, KEY_G1));
-    get()->G1 = G1()->get();
-  }
-
-  if (!has_G2()) {
-    set_G2(fieldFromJson(values, KEY_G2));
-    get()->G2 = G2()->get();
-  }
+  INIT_FIELD(G1, get()->G1, G1()->get());
+  INIT_FIELD(G2, get()->G2, G2()->get());
+  INIT_FIELD(Zr, get()->Zr[0], Zr()->get()[0]);
+  INIT_FIELD(Eq, pdata->Eq[0], Eq()->get()[0]);
+  INIT_FIELD(Fq, pdata->Fq[0], Fq()->get()[0]);
+  INIT_FIELD(Fq2, pdata->Fq2[0], Fq2()->get()[0]);
 
   if (!has_GT()) {
     set_GT(fieldFromJson(values, KEY_GT));
     get()->GT[0] = GT()->get()[0];
   }
+  status.push_back(has_GT());
 
-  if (!has_Zr()) {
-    set_Zr(fieldFromJson(values, KEY_Zr));
-    get()->Zr[0] = Zr()->get()[0];
-  }
 
-  if (!isGTinitialized) {
+  if (! GT()->isFinal()) {
     auto gt_ptr = GT();
-    auto mulg = std::dynamic_pointer_cast<MultiplicativeSubgroup>(gt_ptr);
+    auto mulg = e2ee::dynamic_pointer_cast<MultiplicativeSubgroup>(gt_ptr);
 
     if (mulg == nullptr) { return 10; }
     if (!mulg->has_superField()) { return 20; }
     if (!mulg->superField()->get()) { return 30; }
-    if (!mulg->isFinal()) {
-      pairing_GT_init(get(), mulg->superField()->get());
-      status = std::max(50, gt_ptr->finalize(values));
-    }
-    if (status == 100) {
-      isGTinitialized = true;
-      isFinal(true);
-    }
-  }
 
-  auto pdata = reinterpret_cast<a_pairing_data_ptr>(get()->data);
-  if (!has_Eq()) {
-    set_Eq(fieldFromJson(values, KEY_Eq));
-    pdata->Eq[0] = Eq()->get()[0];
+    pairing_GT_init(get(), mulg->superField()->get());
+    gt_ptr->finalize(values);
   }
-  if (!has_Fq()) {
-    set_Fq(fieldFromJson(values, KEY_Fq));
-    pdata->Fq[0] = Fq()->get()[0];
+  status.push_back(GT()->isFinal());
+
+  auto successes = std::count(status.cbegin(), status.cend(), true);
+  auto result = (successes * 100) / status.size();
+  if (result == 100) {
+    isFinal(true);
   }
-  if (!has_Fq2()) {
-    set_Fq2(fieldFromJson(values, KEY_Fq2));
-    pdata->Fq2[0] = Fq2()->get()[0];
-  }
-  return status;
+  return result;
 }
 
 void
