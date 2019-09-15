@@ -162,7 +162,6 @@ Pairing::finalize(
   }
   status.push_back(has_GT());
 
-
   if (! GT()->isFinal()) {
     auto gt_ptr = GT();
     auto mulg = e2ee::dynamic_pointer_cast<MultiplicativeSubgroup>(gt_ptr);

@@ -144,12 +144,6 @@ class PbcObject {
     return o;
   }
 
-  static void
-  readValueFromJson(struct json_object *jobj, const JsonKey &id, mpz_ptr dst);
-
-  static void
-  readValueFromJson(struct json_object *jobj, const JsonKey &id, const char **dst);
-
   static inline int
   addJsonObject(json_object *parent, const JsonKey &key, json_object *jobj) {
     return json_object_object_add(parent, key.c_str(), jobj);

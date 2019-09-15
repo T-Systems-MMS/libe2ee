@@ -38,25 +38,6 @@ PbcObject::idOf(const void *item) {
   return gen(ss.str());
 }
 
-void
-PbcObject::readValueFromJson(struct json_object *jobj, const JsonKey &key, mpz_ptr dst) {
-  const char *strObj = NULL;
-  readValueFromJson(jobj, key, &strObj);
-
-  if (0 != mpz_set_str(dst, strObj, 10)) {
-    afgh_throw_line("unable to convert '%s' to mpz_t", strObj);
-  }
-}
-
-void
-PbcObject::readValueFromJson(struct json_object *jobj, const JsonKey &key, const char **dst) {
-  const char *strObj = json_object_get_string(objectById(jobj, key));
-  if (strObj == NULL) {
-    afgh_throw_line("Json object is not a string");
-  }
-  *dst = strObj;
-}
-
 std::string PbcObject::exportJson() const {
   struct json_object *root = json_object_new_object();
 
