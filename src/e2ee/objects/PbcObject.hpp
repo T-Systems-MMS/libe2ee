@@ -49,11 +49,8 @@ if (false == (condition)) { return false; }
 
 #define FAIL_UNLESS_VALID(a) \
   do { \
-    if (auto _a = (a).lock()) { \
-      FAIL_UNLESS(_a->isValid()); \
-    } else { \
-      return false; \
-    } \
+    if (! has_##a()) { FAIL(); } \
+    if (! a()->isValid()) { FAIL(); } \
   } while (0)
 
 #define PROPERTY(type, name) \
@@ -64,6 +61,9 @@ if (false == (condition)) { return false; }
  bool has_##name() const { return static_cast<bool>(_##name.lock()); } \
  private: \
  std::weak_ptr<type> _##name
+
+using rapidjson::Document;
+using rapidjson::Value;
 
 namespace e2ee {
   template<class T, class U>
@@ -115,12 +115,14 @@ class PbcObject {
           context(ctx) {
   }
 
-  //virtual bool operator==(const PbcObject &other) const = 0;
-  //virtual bool equals(const std::shared_ptr<PbcObject>& other) const = 0;
-
   std::string exportJson() const;
 
-  virtual json_object *toJson(json_object *root, bool returnIdOnly = false) const = 0;
+  inline bool documentContainsThis(const Document& doc) const {
+    return doc.HasMember(getIdString().c_str());
+  }
+  virtual void addToJson(Document& doc) const = 0;
+  void addJsonObject(Document& doc, Value& dst,
+                     const JsonKey& key, const std::shared_ptr<PbcObject>& object) const;
 
   virtual const std::string &getType() const noexcept = 0;
   virtual const std::string &getSubtype() const noexcept = 0;
@@ -144,14 +146,11 @@ class PbcObject {
     return o;
   }
 
-  static inline int
-  addJsonObject(json_object *parent, const JsonKey &key, json_object *jobj) {
-    return json_object_object_add(parent, key.c_str(), jobj);
-  }
+  static Value mpz_to_json(const mpz_t number,
+                           rapidjson::MemoryPoolAllocator<>& allocator);
 
-  static json_object *mpz_to_json(const mpz_t number);
-
-  static json_object *limbs_to_json(const mp_limb_t *limbs, mp_size_t size);
+  static Value limbs_to_json(const mp_limb_t *limbs, mp_size_t size,
+                             rapidjson::MemoryPoolAllocator<>& allocator);
 
   void setId(const boost::uuids::uuid &id);
   void setId(const std::string &idstr);
@@ -197,14 +196,11 @@ class PbcObject {
   }
 
  protected:
-
-  static
-  struct json_object *createJsonStub(struct json_object *root,
-                                     const boost::uuids::uuid &id);
-
-  static
-  struct json_object *getJsonStub(struct json_object *root,
-                                  const boost::uuids::uuid &id);
+    /**
+     * creates a new Value and stores it in doc.
+     * A reference to the newly created value is returned.
+     */
+  Value& getJsonStub(Document& doc) const;
 
   static
   struct json_object *createJsonId(const boost::uuids::uuid &id);

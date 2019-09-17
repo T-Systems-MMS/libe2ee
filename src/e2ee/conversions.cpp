@@ -113,11 +113,12 @@ str_to_mpz(const std::string::const_iterator& begin,
   return m;
 }
 
-std::unique_ptr<std::string> mpz_to_str(const mpz_t number) {
+std::string mpz_to_str(const mpz_t number) {
   mp_size_t bytes = mpz_sizeinbase(number, CONVERSION_BASE) + 2;
   std::vector<char> buffer(bytes, 0);
   mpz_get_str(&buffer[0], CONVERSION_BASE, number);
-  return std::make_unique<std::string>(buffer.begin(), std::find(buffer.begin(), buffer.end(), '\0'));
+  return std::string(buffer.begin(),
+          std::find(buffer.begin(), buffer.end(), '\0'));
 }
 
 afgh_mpz_t json_to_mpz(const rapidjson::Value& value, const std::string& key) {

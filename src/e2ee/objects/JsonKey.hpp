@@ -21,6 +21,7 @@
 #define SRC_E2EE_OBJECTS_JSONKEY_HPP_
 
 #include <string_view>
+#include <memory>
 
 namespace e2ee {
 class JsonKey {
@@ -28,32 +29,47 @@ class JsonKey {
   JsonKey() = delete;
 
   explicit constexpr JsonKey(const std::string_view& name) noexcept
-  : value(name) {}
+  : string_value(name) {}
 
-  const std::string_view &str() const noexcept { return value; }
-  const char *c_str() const noexcept { return value.data(); }
+  const std::string_view &str() const noexcept { return string_value; }
+  const char *c_str() const noexcept { return string_value.data(); }
 
-  operator const std::string_view &() const noexcept { return value; }
-  operator const char *() const noexcept { return value.data(); }
+  operator rapidjson::Value () const {
+    rapidjson::Value json_value;
+    json_value.SetString(string_value.data(),
+            string_value.length(), allocator());
+    return json_value;
+  }
+
+  operator const std::string_view &() const noexcept { return string_value; }
+  operator const char *() const noexcept { return string_value.data(); }
 
   bool operator==(const JsonKey &key) const noexcept {
-    return value == key.value;
+    return string_value == key.string_value;
   }
 
   bool operator!=(const JsonKey &key) const noexcept {
-    return value != key.value;
+    return string_value != key.string_value;
   }
 
   bool operator==(const std::string_view &key) const noexcept {
-    return value == key;
+    return string_value == key;
   }
 
   bool operator!=(const std::string_view &key) const noexcept {
-    return value != key;
+    return string_value != key;
   }
 
  private:
-  std::string_view value;
+  static rapidjson::MemoryPoolAllocator<>& allocator() {
+    static rapidjson::Document doc;
+    if (!doc.IsObject()) {
+      doc.SetObject();
+    }
+    return doc.GetAllocator();
+  }
+
+  std::string_view string_value;
 };
 
 static constexpr JsonKey KEY_ID("id");                      // NOLINT: cert-err58-cpp

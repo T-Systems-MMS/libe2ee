@@ -48,11 +48,10 @@ class AbstractField :
 
   virtual ~AbstractField() {}
 
-  bool equals(const AbstractField &other) const;
+  bool equals(const AbstractField &other) const override;
   virtual void updateMembers() = 0;
 
-  void
-  fillJsonObject(json_object *root,json_object *jobj, field_cptr field) const;
+  void addToJson(Document& doc) const override;
 
   static bool compareField(field_cptr f1, field_cptr f2, std::weak_ptr<PbcContext>);
 

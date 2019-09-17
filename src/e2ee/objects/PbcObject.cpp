@@ -17,14 +17,16 @@
  * along with libe2ee.  If not, see <http://www.gnu.org/licenses/lgpl>.
  */
 
-#include <e2ee/objects/PbcObject.hpp>
-#include <e2ee/PbcContext.hpp>
-#include <e2ee/errors.hpp>
-#include <e2ee/conversions.hpp>
 #include <pbc.h>
 #include <gmp.h>
 #include <iostream>
 #include <sstream>
+#include <rapidjson/StringBuffer.h>
+#include <rapidjson/PrettyWriter.h>
+#include <e2ee/objects/PbcObject.hpp>
+#include <e2ee/PbcContext.hpp>
+#include <e2ee/errors.hpp>
+#include <e2ee/conversions.hpp>
 
 namespace e2ee {
 
@@ -39,51 +41,82 @@ PbcObject::idOf(const void *item) {
 }
 
 std::string PbcObject::exportJson() const {
-  struct json_object *root = json_object_new_object();
+  Document doc;
+  doc.SetObject();
 
-  struct json_object *r = json_object_new_object();
-  addJsonObject(r, KEY_ID, json_object_new_string(getIdString().c_str()));
-  addJsonObject(r, KEY_TYPE, json_object_new_string(getType().c_str()));
-  addJsonObject(root, KEY_ROOT, r);
+  Value root;
+  root.SetObject();
 
-  json_object_object_add(root, getIdString().c_str(), toJson(root));
-  std::string retval = json_object_to_json_string_ext(root,
-                                                      JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY);
-  json_object_put(root);
-  return retval;
+  Value id, type;
+  id.SetString(getIdString().c_str(), doc.GetAllocator());
+  type.SetString(getType().c_str(), doc.GetAllocator());
+  root.AddMember(KEY_ID, id, doc.GetAllocator());
+  root.AddMember(KEY_TYPE, type, doc.GetAllocator());
+  doc.AddMember(KEY_ROOT, root, doc.GetAllocator());
+
+  Value self;
+  self.SetObject();
+  this->addToJson(doc);
+
+  rapidjson::StringBuffer s;
+  rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(s);
+  doc.Accept(writer);
+  return s.GetString();
 }
 
 struct json_object *PbcObject::createJsonId(const boost::uuids::uuid &id) {
   return json_object_new_string(boost::uuids::to_string(id).c_str());
 }
 
-struct json_object *PbcObject::getJsonStub(struct json_object *root,
-                                           const boost::uuids::uuid &id) {
-  struct json_object *jobj = nullptr;
-  //std::cout << ">>> searching json object " << boost::uuids::to_string(id).c_str() << std::endl;
-  if (json_object_object_get_ex(root, boost::uuids::to_string(id).c_str(), &jobj)) {
-    //std::cout << ">>> found it !!! " << std::endl;
-    return json_object_get(jobj);
+Value& PbcObject::getJsonStub(Document& doc) const {
+  if (!documentContainsThis(doc)) {
+    Value value;
+    value.SetObject();
+    value.AddMember(
+            KEY_TYPE,
+            Value(getType().c_str(), doc.GetAllocator()).Move(),
+            doc.GetAllocator());
+    if (!getSubtype().empty()) {
+      value.AddMember(
+              KEY_SUBTYPE,
+              Value(getSubtype().c_str(), doc.GetAllocator()).Move(),
+              doc.GetAllocator());
+    }
+    value.AddMember(
+            KEY_ID,
+            Value(getIdString().c_str(), doc.GetAllocator()).Move(),
+            doc.GetAllocator());
+
+    doc.AddMember(
+            Value(getIdString().c_str(), doc.GetAllocator()).Move(),
+            value,
+            doc.GetAllocator());
   }
-  return nullptr;
+  return doc[getIdString().c_str()];
 }
 
-struct json_object *PbcObject::createJsonStub(struct json_object *root,
-                                              const boost::uuids::uuid &id) {
-  struct json_object *jobj = nullptr;
-  jobj = json_object_new_object();
-  json_object_object_add(root, boost::uuids::to_string(id).c_str(), jobj);
-  return json_object_get(jobj);
+void PbcObject::addJsonObject(Document& doc, Value& dst,
+        const JsonKey& key, const std::shared_ptr<PbcObject>& object) const {
+  object->addToJson(doc);
+  dst.AddMember(key,
+          Value(object->getIdString().c_str(), doc.GetAllocator()).Move(),
+          doc.GetAllocator());
 }
 
-json_object *PbcObject::mpz_to_json(const mpz_t number) {
-  auto value = mpz_to_str(number);
-  return json_object_new_string(value->c_str());
+Value PbcObject::mpz_to_json(const mpz_t number,
+        rapidjson::MemoryPoolAllocator<>& allocator) {
+  auto str = mpz_to_str(number);
+  Value value;
+  value.SetString(str.c_str(), str.size(), allocator);
+  return value;
 }
 
-struct json_object *PbcObject::limbs_to_json(const mp_limb_t *limbs, mp_size_t size) {
-  auto value = limbs_to_str(limbs, size);
-  return json_object_new_string(value->c_str());
+Value PbcObject::limbs_to_json(const mp_limb_t *limbs, mp_size_t size,
+        rapidjson::MemoryPoolAllocator<>& allocator) {
+  auto str = limbs_to_str(limbs, size);
+  Value value;
+  value.SetString(str->c_str(), str->size(), allocator);
+  return value;
 }
 
 void PbcObject::setId(const std::string &idstr) {

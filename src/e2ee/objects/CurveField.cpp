@@ -45,35 +45,38 @@ void CurveField::updateMembers() {
   assert(isFinal());
   const curve_data *data = reinterpret_cast<curve_data *>(get()->data);
   if (auto ctx = lockedContext()) {
-    a = ctx->fromNative(&data->a[0]);
-    b = ctx->fromNative(&data->b[0]);
-    gen = ctx->fromNative(&data->gen[0]);
-    gen_no_cofac = ctx->fromNative(&data->gen_no_cofac[0]);
+    set_a(ctx->fromNative(&data->a[0]));
+    set_b(ctx->fromNative(&data->b[0]));
+    set_gen(ctx->fromNative(&data->gen[0]));
+    set_gen_no_cofac(ctx->fromNative(&data->gen_no_cofac[0]));
   }
 }
 
-struct json_object *
-CurveField::toJson(struct json_object *root, bool returnIdOnly) const {
+void CurveField::addToJson(Document& doc) const {
   assert(isFinal());
-  json_object *jobj = getJsonStub(root, getId());
-  if (jobj) { RETURN_JSON_OBJECT(jobj, getId(), returnIdOnly); }
-  else { jobj = createJsonStub(root, getId()); }
+  if (documentContainsThis(doc)) {
+    return;
+  }
+  AbstractField::addToJson(doc);
 
-  fillJsonObject(root, jobj, const_cast<field_ptr>(get()));
+  auto& self = getJsonStub(doc);
   const curve_data *data = (curve_data *) get()->data;
 
-  addJsonObject(jobj, KEY_A, a.lock()->toJson(root, true));
-  addJsonObject(jobj, KEY_B, b.lock()->toJson(root, true));
-  addJsonObject(jobj, KEY_GEN, gen.lock()->toJson(root, true));
-  addJsonObject(jobj, KEY_GENNOCOFAC, gen_no_cofac.lock()->toJson(root, true));
+  addJsonObject(doc, self, KEY_A, a());
+  addJsonObject(doc, self, KEY_B, b());
+  addJsonObject(doc, self, KEY_GEN, gen());
+  addJsonObject(doc, self, KEY_GENNOCOFAC, gen_no_cofac());
 
   if (data->cofac != nullptr) {
-    addJsonObject(jobj, KEY_COFAC, mpz_to_json(data->cofac));
+    self.AddMember(KEY_COFAC,
+            mpz_to_json(data->cofac, doc.GetAllocator()).Move(),
+            doc.GetAllocator());
   }
   if (data->quotient_cmp != NULL) {
-    addJsonObject(jobj, KEY_QUOTIENTCMP, mpz_to_json(data->quotient_cmp));
+    self.AddMember(KEY_QUOTIENTCMP,
+                   mpz_to_json(data->quotient_cmp, doc.GetAllocator()).Move(),
+                   doc.GetAllocator());
   }
-  RETURN_JSON_OBJECT(jobj, getId(), returnIdOnly);
 }
 
 bool CurveField::isValid() const {
@@ -90,29 +93,23 @@ CurveField::finalize(
         const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values) {
   percent_t status = 0;
   assert(!isFinal());
-  if (!a.lock()) {
-    a = elementFromJson(values, KEY_A);
-    assert(a.lock());
+  if (!has_a()) {
+    set_a(elementFromJson(values, KEY_A));
+    assert(has_a());
     status = 10;
   }
-  if (!b.lock()) {
-    b = elementFromJson(values, KEY_B);
-    assert(b.lock());
+  if (!has_b()) {
+    set_b(elementFromJson(values, KEY_B));
+    assert(has_b());
     status = 20;
   }
-
-  auto _a = a.lock(); assert(_a);
-  auto _b = b.lock(); assert(_b);
-  if (_a->get() == nullptr || _b->get() == nullptr) {
-    return status;
-  }
-  if (_a->get()->field == nullptr || _b->get()->field == nullptr) {
+  if (!has_a() || !has_b()) {
     return status;
   }
   status = 30;
 
-  if (! _a->isFinal()) { return status; }
-  if (! _b->isFinal()) { return status; }
+  if (! a()->isFinal()) { return status; }
+  if (! b()->isFinal()) { return status; }
 
   if (!initialized) {
     auto jobj = getJsonObject();
@@ -121,7 +118,7 @@ CurveField::finalize(
     assert(!mpz_is0(order.get()));
     auto order_ptr = order.release();
     auto cofac_ptr = cofac.release();
-    field_init_curve_ab(this->get(), _a->get(), _b->get(),
+    field_init_curve_ab(this->get(), a()->get(), b()->get(),
                         order_ptr,
                         cofac_ptr);
     initialized = true;
@@ -129,7 +126,7 @@ CurveField::finalize(
   }
   assert(initialized);
 
-  if (!gen.lock()) {
+  if (! has_gen()) {
     auto __gen = elementFromJson(values, KEY_GEN);
     if (__gen == nullptr) {
       return status;
@@ -138,10 +135,12 @@ CurveField::finalize(
       return status;
     }
     set_gen(__gen);
+    curve_data_ptr cdp = reinterpret_cast<curve_data_ptr>(get()->data);
+    element_set(cdp->gen, gen()->get());
     status = 70;
   }
 
-  if (!gen_no_cofac.lock()) {
+  if (! has_gen_no_cofac()) {
     auto __gen_no_cofac = elementFromJson(values, KEY_GENNOCOFAC);
     if (__gen_no_cofac == nullptr) {
       return status;
@@ -150,33 +149,18 @@ CurveField::finalize(
       return status;
     }
     set_gen_no_cofac(__gen_no_cofac);
+    gen_no_cofac()->get()->field = get();
+    curve_data_ptr cdp = reinterpret_cast<curve_data_ptr>(get()->data);
+    element_set(cdp->gen_no_cofac, gen_no_cofac()->get());
     status = 80;
   }
 
-  isFinal(initialized && gen_no_cofac.lock()->isFinal() && gen.lock()->isFinal());
+  isFinal(initialized && gen_no_cofac()->isFinal() && gen()->isFinal());
   if (isFinal()) {
     status = 100;
     assert(isValid());
   }
   return status;
-}
-
-void
-CurveField::set_gen_no_cofac(const std::shared_ptr<Element>& gen_no_cofac) {
-  assert(gen_no_cofac->isFinal());
-  assert(gen_no_cofac->get()->data != nullptr);
-
-  this->gen_no_cofac = gen_no_cofac;
-  this->gen_no_cofac.lock()->get()->field = get();
-  curve_data_ptr cdp = reinterpret_cast<curve_data_ptr>(get()->data);
-  element_set(cdp->gen_no_cofac, this->gen_no_cofac.lock()->get());
-}
-
-void
-CurveField::set_gen(const std::shared_ptr<Element>& gen) {
-  this->gen = gen;
-  curve_data_ptr cdp = reinterpret_cast<curve_data_ptr>(get()->data);
-  element_set(cdp->gen, this->gen.lock()->get());
 }
 
 bool CurveField::equals(const CurveField &other) const {

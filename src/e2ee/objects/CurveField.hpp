@@ -50,7 +50,7 @@ class CurveField :
 
   bool equals(const CurveField &other) const final;
 
-  json_object *toJson(json_object *root, bool returnIdOnly) const override;
+  void addToJson(Document& doc) const override;
 
   percent_t finalize(
           const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values) override;
@@ -59,18 +59,11 @@ class CurveField :
 
   void updateMembers() override;
 
-  void
-  set_gen_no_cofac(const std::shared_ptr<Element>& gen_no_cofac);
-
-  void
-  set_gen(const std::shared_ptr<Element>& gen);
-
  private:
-  std::weak_ptr<Element> a;
-  std::weak_ptr<Element> b;
-  std::weak_ptr<Element> gen_no_cofac;
-  std::weak_ptr<Element> gen;
-  // std::shared_ptr<__mpz_struct> cofac;
+  PROPERTY(Element, a);
+  PROPERTY(Element, b);
+  PROPERTY(Element, gen_no_cofac);
+  PROPERTY(Element, gen);
   bool initialized;
 };
 

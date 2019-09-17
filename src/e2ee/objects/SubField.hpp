@@ -66,7 +66,7 @@ class SubField :
   percent_t finalize(
           const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>> &values) override;
 
-  virtual json_object *toJson(json_object *root, bool returnIdOnly = false) const override;
+  void addToJson(Document& doc) const override;
 
   virtual void isFinal(bool f) override { AbstractField::isFinal(f); }
 
@@ -103,17 +103,16 @@ percent_t SubField<F>::finalize(
 }
 
 template<class F>
-struct json_object *
-SubField<F>::toJson(struct json_object *root, bool returnIdOnly) const {
-  json_object *jobj = getJsonStub(root, getId());
-  if (jobj) { RETURN_JSON_OBJECT(jobj, getId(), returnIdOnly); }
-  else { jobj = createJsonStub(root, getId()); }
-
-  fillJsonObject(root, jobj, const_cast<field_ptr>(get()));
-
+void SubField<F>::addToJson(Document& doc) const {
+  assert(isFinal());
   assert(has_superField());
-  addJsonObject(jobj, KEY_BASE, superField()->toJson(root, true));
-  RETURN_JSON_OBJECT(jobj, getId(), returnIdOnly);
+  if(documentContainsThis(doc)) {
+    return;
+  }
+  AbstractField::addToJson(doc);
+
+  auto& self = getJsonStub(doc);
+  addJsonObject(doc, self, KEY_BASE, superField());
 }
 
 

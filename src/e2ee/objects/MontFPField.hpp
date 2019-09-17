@@ -50,7 +50,7 @@ namespace e2ee {
 
     bool equals(const MontFPField& other) const final;
 
-    json_object* toJson(json_object* root, bool returnIdOnly = false) const override;
+    void addToJson(Document& doc) const override;
 
     void updateMembers() override {}
     percent_t finalize(

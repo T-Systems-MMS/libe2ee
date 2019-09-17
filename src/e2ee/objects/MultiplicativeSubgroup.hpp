@@ -44,7 +44,7 @@ class MultiplicativeSubgroup :
           : PbcObject(context, id, false),
           SubField(context, value) {}
 
-  virtual json_object *toJson(json_object *root, bool returnIdOnly = false) const override;
+  void addToJson(Document& doc) const override;
 
   virtual void updateMembers() override;
 

@@ -31,18 +31,20 @@
 namespace e2ee {
 
 void
-AbstractField::fillJsonObject(
-        json_object *root,
-        json_object *jobj,
-        field_cptr field) const {
-  assert(std::string(field->name).length() > 0);
-  addJsonObject(jobj, KEY_TYPE, json_object_new_string("field"));
-  addJsonObject(jobj, KEY_SUBTYPE, json_object_new_string(field->name));
-  addJsonObject(jobj, KEY_ORDER, mpz_to_json(field->order));
+AbstractField::addToJson(Document& doc) const {
+  assert(isFinal());
+  if (documentContainsThis(doc)) {
+    return;
+  }
 
-  if (field->pairing != NULL) {
-    auto pairing = lockedContext()->fromNative(field->pairing);
-    addJsonObject(jobj, KEY_PAIRING, pairing->toJson(root, true) );
+  auto& self = getJsonStub(doc);
+  self.AddMember(KEY_ORDER,
+                 mpz_to_json(get()->order, doc.GetAllocator()).Move(),
+                 doc.GetAllocator());
+
+  if (get()->pairing != NULL) {
+    auto pairing = lockedContext()->fromNative(get()->pairing);
+    addJsonObject(doc, self, KEY_PAIRING, pairing);
   }
 }
 

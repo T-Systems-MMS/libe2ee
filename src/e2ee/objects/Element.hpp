@@ -103,17 +103,10 @@ class Element :
 
   std::shared_ptr<Element> operator!() const;
 
-  struct json_object *toJson(struct json_object *root, bool returnIdOnly = false) const override;
+  void addToJson(Document& doc) const override;
 
   percent_t finalize(
           const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values) override;
-
-  inline std::shared_ptr<AbstractField> getField() {
-    return std::shared_ptr<AbstractField>(field);
-  }
-  inline std::shared_ptr<AbstractField> getField() const {
-    return std::shared_ptr<AbstractField>(field);
-  }
 
   static std::string
   formatElementComponents(const std::vector<afgh_mpz_t> &values);
@@ -122,16 +115,14 @@ class Element :
   bool equals(const Element &other) const final;
 
  private:
-  std::weak_ptr<AbstractField> field;
+  PROPERTY(AbstractField, field);
   std::string value;
 
   element_s native_element;
 
   static
-  void addNumberToJson(json_object *jobj,
-                       const JsonKey &key,
-                       const std::string::const_iterator begin,
-                       const std::string::const_iterator end);
+  Value numberToJson(const std::string& s,
+          rapidjson::MemoryPoolAllocator<>& allocator);
 };
 
 }  // namespace e2ee

@@ -67,7 +67,7 @@ TEST(SerializationTest, TestMpzSerialization) {
   auto strObj = createRandomNumber(std::rand() % 50 + 10);
   e2ee::afgh_mpz_t tmp = e2ee::str_to_mpz(strObj->cbegin(), strObj->cend());
   auto strObj2 = e2ee::mpz_to_str(tmp.get());
-  ASSERT_EQ(*strObj, *strObj2);
+  ASSERT_EQ(*strObj, strObj2);
 }
 
 TEST(SerializationTest, TestCrossSerialization1) {

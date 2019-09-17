@@ -42,13 +42,17 @@ void MultiplicativeSubgroup::updateMembers() {
    */
 }
 
-struct json_object *
-MultiplicativeSubgroup::toJson(struct json_object *root, bool returnIdOnly) const {
-  json_object *jobj = SubField<MultiplicativeSubgroup>::toJson(root, false);
-  if (has_pairing()) {
-    addJsonObject(jobj, KEY_PAIRING, pairing()->toJson(root, true));
+void MultiplicativeSubgroup::addToJson(Document& doc) const {
+  assert(isFinal());
+  if(documentContainsThis(doc)) {
+    return;
   }
-  RETURN_JSON_OBJECT(jobj, getId(), returnIdOnly);
+  SubField<MultiplicativeSubgroup>::addToJson(doc);
+  auto& self = getJsonStub(doc);
+
+  if (has_pairing()) {
+    addJsonObject(doc, self, KEY_PAIRING, pairing());
+  }
 }
 
 percent_t MultiplicativeSubgroup::finalize(

@@ -41,20 +41,28 @@ MontFPField::MontFPField(std::shared_ptr<PbcContext> context,
   // get()->data = data;
 }
 
-struct json_object *
-MontFPField::toJson(struct json_object *root, bool returnIdOnly) const {
-  json_object *jobj = getJsonStub(root, getId());
-  if (jobj) { RETURN_JSON_OBJECT(jobj, getId(), returnIdOnly); }
-  else { jobj = createJsonStub(root, getId()); }
+void MontFPField::addToJson(Document& doc) const {
+  assert(isFinal());
+  if (documentContainsThis(doc)) {
+    return;
+  }
+  AbstractField::addToJson(doc);
 
-  fillJsonObject(root, jobj, const_cast<field_ptr>(get()));
+  auto& self = getJsonStub(doc);
   const montfp_data *data = (montfp_data *) get()->data;
 
-  addJsonObject(jobj, KEY_MODULUS, limbs_to_json(data->primelimbs, data->limbs));
-  addJsonObject(jobj, KEY_NEGPINV, limbs_to_json(&(data->negpinv), 1));
-  addJsonObject(jobj, KEY_R, limbs_to_json(data->R, data->limbs));
-  addJsonObject(jobj, KEY_R3, limbs_to_json(data->R3, data->limbs));
-  RETURN_JSON_OBJECT(jobj, getId(), returnIdOnly);
+  self.AddMember(KEY_MODULUS,
+          limbs_to_json(data->primelimbs, data->limbs, doc.GetAllocator()).Move(),
+          doc.GetAllocator());
+  self.AddMember(KEY_NEGPINV,
+          limbs_to_json(&(data->negpinv), 1, doc.GetAllocator()).Move(),
+          doc.GetAllocator());
+  self.AddMember(KEY_R,
+          limbs_to_json(data->R, data->limbs, doc.GetAllocator()).Move(),
+          doc.GetAllocator());
+  self.AddMember(KEY_R3,
+          limbs_to_json(data->R3, data->limbs, doc.GetAllocator()).Move(),
+          doc.GetAllocator());
 }
 
 bool MontFPField::equals(const MontFPField &other) const {

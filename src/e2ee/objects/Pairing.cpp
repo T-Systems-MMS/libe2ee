@@ -121,26 +121,27 @@ Pairing::~Pairing() {
   set(nullptr);
 }
 
-struct json_object *
-Pairing::toJson(json_object *root, bool returnIdOnly) const {
-  json_object *jobj = getJsonStub(root, getId());
-  if (jobj) { RETURN_JSON_OBJECT(jobj, getId(), returnIdOnly); }
-  else {
-    jobj = createJsonStub(root, getId());
-    addJsonObject(jobj, KEY_TYPE, json_object_new_string("pairing"));
+void Pairing::addToJson(Document& doc) const {
+  assert(isFinal());
+  if (documentContainsThis(doc)) {
+    return;
   }
-  addJsonObject(jobj, KEY_G1, G1()->toJson(root, true));
-  addJsonObject(jobj, KEY_G2, G2()->toJson(root, true));
-  addJsonObject(jobj, KEY_GT, GT()->toJson(root, true));
-  addJsonObject(jobj, KEY_Zr, Zr()->toJson(root, true));
-  addJsonObject(jobj, KEY_r, mpz_to_json(get()->r));
-  addJsonObject(jobj, KEY_phikonr, mpz_to_json(get()->phikonr));
 
-  addJsonObject(jobj, KEY_Eq, Eq()->toJson(root, true));
-  addJsonObject(jobj, KEY_Fq, Fq()->toJson(root, true));
-  addJsonObject(jobj, KEY_Fq2, Fq2()->toJson(root, true));
+  auto& self = getJsonStub(doc);
+  addJsonObject(doc, self, KEY_G1, G1());
+  addJsonObject(doc, self, KEY_G2, G2());
+  addJsonObject(doc, self, KEY_GT, GT());
+  addJsonObject(doc, self, KEY_Zr, Zr());
+  addJsonObject(doc, self, KEY_Eq, Eq());
+  addJsonObject(doc, self, KEY_Fq, Fq());
+  addJsonObject(doc, self, KEY_Fq2, Fq2());
 
-  RETURN_JSON_OBJECT(jobj, getId(), returnIdOnly);
+  self.AddMember(KEY_r,
+                 mpz_to_json(get()->r, doc.GetAllocator()).Move(),
+                 doc.GetAllocator());
+  self.AddMember(KEY_phikonr,
+                 mpz_to_json(get()->phikonr, doc.GetAllocator()).Move(),
+                 doc.GetAllocator());
 }
 
 percent_t

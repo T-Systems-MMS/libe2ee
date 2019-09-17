@@ -33,7 +33,7 @@ namespace e2ee {
     sk->randomize();
 
     auto pk = *(global->g()) ^ *sk;
-    assert(global->g()->getField()->getId() == pk->getField()->getId());
+    assert(global->g()->field()->getId() == pk->field()->getId());
     secretKey = sk;
     publicKey = pk;
   }

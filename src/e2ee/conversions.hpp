@@ -55,7 +55,7 @@ afgh_mpz_t str_to_mpz(const std::string& str, size_t base = CONVERSION_BASE) {
   return str_to_mpz(str.cbegin(), str.cend(), base);
 }
 
-std::unique_ptr<std::string> mpz_to_str(const mpz_t number);
+std::string mpz_to_str(const mpz_t number);
 
 std::unique_ptr<std::string> limbs_to_str(
         const mp_limb_t *limbs, mp_size_t size);

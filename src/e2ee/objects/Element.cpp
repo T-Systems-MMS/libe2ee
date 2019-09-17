@@ -46,7 +46,7 @@ Element &Element::operator=(const element_s *src) {
     setId(idOf(&native_element));
   }
 
-  this->field = lockedContext()->fromNative(src->field);
+  set_field(lockedContext()->fromNative(src->field));
 
   isFinal(true);
   return *this;
@@ -81,7 +81,7 @@ Element::Element(std::shared_ptr<PbcContext> context,
   } catch (AfghError &e) { /* ignore missing value */ }
 
   this->value = Element::formatElementComponents(v);
-  this->field = fieldFromJson(values, KEY_FIELD, false);
+  set_field(fieldFromJson(values, KEY_FIELD, false));
 }
 
 Element::Element(std::shared_ptr<PbcContext> context,
@@ -96,7 +96,7 @@ Element::Element(std::shared_ptr<PbcContext> context,
     set(&native_element);
     setId(idOf(&native_element));
 
-    field = lockedContext()->fromNative(element->field);
+    set_field(lockedContext()->fromNative(element->field));
 
     char buf[2048];
     element_snprint(&buf[0], sizeof(buf) / sizeof(buf[0]), &native_element);
@@ -107,11 +107,11 @@ Element::Element(std::shared_ptr<PbcContext> context,
 }
 
 Element::Element(std::shared_ptr<PbcContext> context,
-                 const std::shared_ptr<AbstractField>& _field,
+                 const std::shared_ptr<AbstractField>& f,
                  element_ptr element,
                  bool isFinal)
         : PbcObject(context, idOf(element), isFinal),
-          PbcObjectImpl(element), field(_field) {
+          PbcObjectImpl(element), _field(f) {
   if (isFinal) {
     char buf[2048];
     element_snprint(&buf[0], sizeof(buf) / sizeof(buf[0]), element);
@@ -123,33 +123,30 @@ Element::Element(std::shared_ptr<PbcContext> context,
 
 
 Element::Element(std::shared_ptr<PbcContext> context,
-        const std::shared_ptr<AbstractField>& _field)
+        const std::shared_ptr<AbstractField>& f)
         : PbcObject(context, boost::uuids::nil_uuid(), true),
-          PbcObjectImpl(allocate_unmanaged<element_s>()), field(_field) {
-  element_init(get(), getField()->get());
+          PbcObjectImpl(allocate_unmanaged<element_s>()), _field(f) {
+  element_init(get(), field()->get());
   setId(idOf(get()));
   assert(isValid());
 }
 
 bool Element::isValid() const {
   FAIL_UNLESS(isFinal());
-  FAIL_IF(!field.lock());
+  FAIL_IF(!has_field());
   FAIL_IF(get() == nullptr);
   FAIL_IF(get()->field == nullptr);
   SUCCEED();
 }
 
-json_object *
-Element::toJson(json_object *root, bool returnIdOnly) const {
-
+void Element::addToJson(Document& doc) const {
   assert(isValid());
-
-  json_object *jobj = getJsonStub(root, getId());
-  if (jobj) { RETURN_JSON_OBJECT(jobj, getId(), returnIdOnly); }
-  else {
-    jobj = createJsonStub(root, getId());
-    addJsonObject(jobj, KEY_TYPE, json_object_new_string("element"));
+  if (documentContainsThis(doc)) {
+    return;
   }
+
+  auto& self = getJsonStub(doc);
+  addJsonObject(doc, self, KEY_FIELD, field());
 
   char buf[2048];
 
@@ -177,40 +174,41 @@ Element::toJson(json_object *root, bool returnIdOnly) const {
     case 0:
       break;
     case 2:
-      addNumberToJson(jobj, KEY_y, values[1].cbegin(), values[1].cend());
+      self.AddMember(KEY_y,
+              numberToJson(values[1], doc.GetAllocator()).Move(),
+              doc.GetAllocator());
       /* fall through */
     case 1:
-      addNumberToJson(jobj, KEY_x, values[0].cbegin(), values[0].cend());
+      self.AddMember(KEY_x,
+              numberToJson(values[0], doc.GetAllocator()).Move(),
+              doc.GetAllocator());
       break;
     default:
       for (size_t count = 0; count < values.size(); ++count) {
-        addNumberToJson(jobj,
-                        JsonKey(std::string("a") + std::to_string(count)),
-                        values[count].cbegin(), values[count].cend());
+        auto key = std::string("a") + std::to_string(count);
+        self.AddMember(Value(key.c_str(), doc.GetAllocator()).Move(),
+                       numberToJson(values[count], doc.GetAllocator()).Move(),
+                       doc.GetAllocator());
       }
   }
-
-  addJsonObject(jobj, KEY_FIELD, getField()->toJson(root, true));
-
-  RETURN_JSON_OBJECT(jobj, getId(), returnIdOnly);
 }
 
-void Element::addNumberToJson(json_object *jobj,
-                              const JsonKey &key,
-                              const std::string::const_iterator begin,
-                              const std::string::const_iterator end) {
-  auto m = str_to_mpz(begin, end, 10);
-  auto value = mpz_to_str(m.get());
-  addJsonObject(jobj, key, json_object_new_string(value->c_str()));
+Value Element::numberToJson(const std::string& s,
+        rapidjson::MemoryPoolAllocator<>& allocator) {
+  auto m = str_to_mpz(s.begin(), s.end(), 10);
+  auto str = mpz_to_str(m.get());
+  Value value;
+  value.SetString(str.c_str(), str.size(), allocator);
+  return value;
 }
 
 percent_t Element::finalize(
-        const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values) {
+        const std::map<boost::uuids::uuid,
+        std::shared_ptr<rapidjson::Value>>& values) {
   assert(!isFinal());
 
   /* we require a field to initialize the element */
-  auto fptr = field.lock();
-  assert(fptr != nullptr);
+  auto fptr = field();
   if (fptr->get()->init == NULL) {
     LOG(DEBUG) << COLOR(yellow) << "required field is not initialized yet" << std::endl;
     LOG(DEBUG) << "field type is    " << fptr->getSubtype() << std::endl;

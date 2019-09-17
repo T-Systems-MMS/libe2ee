@@ -59,8 +59,7 @@ class Pairing :
 
   bool equals(const Pairing &other) const final;
 
-  struct json_object *
-  toJson(struct json_object *root, bool returnIdOnly = false) const override;
+  void addToJson(Document& doc) const override;
 
   percent_t finalize(
           const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values) override;
