@@ -15,14 +15,13 @@ include_directories("${GMP_INCLUDES}")
 include_directories("${PROJECT_SOURCE_DIR}/src/lib/rapidjson/include")
 include_directories("${PROJECT_SOURCE_DIR}/src/lib/aixlog/include")
 add_subdirectory("${PROJECT_SOURCE_DIR}/src/lib/pbc")
-add_subdirectory("${PROJECT_SOURCE_DIR}/src/lib/json-c")
 
 include_directories("${PROJECT_SOURCE_DIR}/src")
 include_directories("${PROJECT_SOURCE_DIR}/src/lib/pbc/include")
 
 
 add_library(e2ee SHARED ${E2EE_SRCS})
-target_link_libraries(e2ee pbc ${GMP_LIBRARIES} json-c)
+target_link_libraries(e2ee pbc ${GMP_LIBRARIES})
 
 add_subdirectory("${PROJECT_SOURCE_DIR}/src/lib/googletest")
 set_target_properties(gtest PROPERTIES FOLDER extern)

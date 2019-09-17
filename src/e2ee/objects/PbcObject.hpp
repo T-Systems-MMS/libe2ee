@@ -33,7 +33,6 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include <json-c/json_object.h>
 
 #define RETURN_JSON_OBJECT(obj,id,returnIdOnly) \
 return ((returnIdOnly)?(createJsonId(id)):(obj))
@@ -136,15 +135,6 @@ class PbcObject {
 
   static
   boost::uuids::uuid idOf(const void *item);
-
-  static inline struct json_object *
-  objectById(struct json_object *jobj, const JsonKey &key) {
-    struct json_object *o = NULL;
-    if (!json_object_object_get_ex(jobj, key.c_str(), &o)) {
-      afgh_throw_line("value for key '%s' not found", key.c_str());
-    }
-    return o;
-  }
 
   static Value mpz_to_json(const mpz_t number,
                            rapidjson::MemoryPoolAllocator<>& allocator);

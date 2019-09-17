@@ -64,10 +64,6 @@ std::string PbcObject::exportJson() const {
   return s.GetString();
 }
 
-struct json_object *PbcObject::createJsonId(const boost::uuids::uuid &id) {
-  return json_object_new_string(boost::uuids::to_string(id).c_str());
-}
-
 Value& PbcObject::getJsonStub(Document& doc) const {
   if (!documentContainsThis(doc)) {
     Value value;
