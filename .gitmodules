@@ -7,9 +7,6 @@
 [submodule "lib/googletest"]
 	path = src/lib/googletest
 	url = https://github.com/google/googletest.git
-[submodule "src/lib/json-c"]
-	path = src/lib/json-c
-	url = https://github.com/json-c/json-c.git
 [submodule "src/rapidjson"]
 	path = src/rapidjson
 	url = https://github.com/Tencent/rapidjson.git
