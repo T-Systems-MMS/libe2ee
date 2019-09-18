@@ -1,5 +1,5 @@
 //
-//  test_element.cpp
+//  test_pbcencryption.cpp
 //  AFGHCryptoTest
 //
 //  Created by Jan Starke on 29.10.18.
