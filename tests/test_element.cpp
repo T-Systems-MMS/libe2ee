@@ -59,37 +59,4 @@ TEST_CASE("test element serialization", "[conversion][json]") {
   SECTION("TestPairingG1") { testJsonExport(global->pairing()->G1()); }
   SECTION("TestPairingG2") { testJsonExport(global->pairing()->G2()); }
   SECTION("TestPairing") { testJsonExport(global->pairing()); }
-
-  SECTION("TestFirstLevelEncryption") {
-    auto kp = std::make_unique<e2ee::KeyPair>(global);
-    auto message1 = std::make_shared<e2ee::Element>(global->lockedContext(), global->pairing()->GT());
-    message1->randomize();
-
-    auto ciphertext = std::make_shared<e2ee::Tuple>(
-            message1,
-            kp->getPublicKey(),
-            global,
-            false);
-    auto message2 = ciphertext->decryptFirstLevel(kp->getSecretKey());
-    REQUIRE(*message1 == *message2);
-  }
-
-  SECTION("TestSecondLevelEncryption") {
-    auto sender = std::make_unique<e2ee::KeyPair>(global);
-    auto receiver = std::make_unique<e2ee::KeyPair>(global);
-
-    auto message1 = std::make_shared<e2ee::Element>(global->lockedContext(), global->pairing()->GT());
-    message1->randomize();
-
-    auto ciphertext1 = std::make_shared<e2ee::Tuple>(
-            message1,
-            sender->getPublicKey(),
-            global,
-            true);
-    auto rk = sender->getReEncryptionKeyFor(receiver->getPublicKey());
-    auto ciphertext2 = ciphertext1->reEncrypt(rk);
-
-    auto message2 = ciphertext2->decryptFirstLevel(receiver->getSecretKey());
-    REQUIRE(*message1 == *message2);
-  }
 }
