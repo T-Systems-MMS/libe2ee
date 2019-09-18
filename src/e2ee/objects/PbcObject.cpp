@@ -21,8 +21,8 @@
 #include <gmp.h>
 #include <iostream>
 #include <sstream>
-#include <rapidjson/StringBuffer.h>
-#include <rapidjson/PrettyWriter.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/prettywriter.h>
 #include <e2ee/objects/PbcObject.hpp>
 #include <e2ee/PbcContext.hpp>
 #include <e2ee/errors.hpp>

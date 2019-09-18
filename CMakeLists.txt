@@ -23,10 +23,4 @@ include_directories("${PROJECT_SOURCE_DIR}/src/lib/pbc/include")
 add_library(e2ee SHARED ${E2EE_SRCS})
 target_link_libraries(e2ee pbc ${GMP_LIBRARIES})
 
-add_subdirectory("${PROJECT_SOURCE_DIR}/src/lib/googletest")
-set_target_properties(gtest PROPERTIES FOLDER extern)
-set_target_properties(gtest_main PROPERTIES FOLDER extern)
-set_target_properties(gmock PROPERTIES FOLDER extern)
-set_target_properties(gmock_main PROPERTIES FOLDER extern)
-
 add_subdirectory(tests)

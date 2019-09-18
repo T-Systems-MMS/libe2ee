@@ -85,7 +85,7 @@ bool CurveField::isValid() const {
   FAIL_UNLESS_VALID(gen);
   FAIL_UNLESS_VALID(gen_no_cofac);
   FAIL_UNLESS(get()->init != NULL);
-  SUCCEED();
+  return true;
 }
 
 percent_t

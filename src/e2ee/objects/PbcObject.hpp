@@ -43,13 +43,10 @@ if (true == (condition)) { return false; }
 #define FAIL_UNLESS(condition) \
 if (false == (condition)) { return false; }
 
-#define SUCCEED() do { return true; } while (0)
-#define FAIL() do { return false; } while (0)
-
 #define FAIL_UNLESS_VALID(a) \
   do { \
-    if (! has_##a()) { FAIL(); } \
-    if (! a()->isValid()) { FAIL(); } \
+    if (! has_##a()) { return false; } \
+    if (! a()->isValid()) { return false; } \
   } while (0)
 
 #define PROPERTY(type, name) \

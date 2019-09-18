@@ -136,7 +136,7 @@ bool Element::isValid() const {
   FAIL_IF(!has_field());
   FAIL_IF(get() == nullptr);
   FAIL_IF(get()->field == nullptr);
-  SUCCEED();
+  return true;
 }
 
 void Element::addToJson(Document& doc) const {
