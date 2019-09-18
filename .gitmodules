@@ -4,12 +4,6 @@
 [submodule "lib/rapidjson"]
 	path = src/lib/rapidjson
 	url = https://github.com/Tencent/rapidjson.git
-[submodule "lib/googletest"]
-	path = src/lib/googletest
-	url = https://github.com/google/googletest.git
-[submodule "src/rapidjson"]
-	path = src/rapidjson
-	url = https://github.com/Tencent/rapidjson.git
 [submodule "src/lib/relic"]
 	path = src/lib/relic
 	url = https://github.com/relic-toolkit/relic.git
