@@ -4,9 +4,6 @@
 [submodule "lib/rapidjson"]
 	path = src/lib/rapidjson
 	url = https://github.com/Tencent/rapidjson.git
-[submodule "src/lib/relic"]
-	path = src/lib/relic
-	url = https://github.com/relic-toolkit/relic.git
 [submodule "src/lib/aixlog"]
 	path = src/lib/aixlog
 	url = https://github.com/badaix/aixlog.git
