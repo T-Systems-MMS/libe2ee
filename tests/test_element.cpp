@@ -46,6 +46,7 @@ TEST_CASE("test element serialization", "[conversion][json]") {
 
   auto context = e2ee::PbcContext::createInstance();
   auto global = std::make_shared<e2ee::GlobalParameters>(context, 160, 512);
+  auto dummy = std::make_unique<e2ee::KeyPair>(global);
 
   SECTION("TestElementIdUnambiguity") {
     using namespace boost::uuids;
@@ -59,4 +60,7 @@ TEST_CASE("test element serialization", "[conversion][json]") {
   SECTION("TestPairingG1") { testJsonExport(global->pairing()->G1()); }
   SECTION("TestPairingG2") { testJsonExport(global->pairing()->G2()); }
   SECTION("TestPairing") { testJsonExport(global->pairing()); }
+
+  SECTION("TestPublicKey") { testJsonExport(dummy->getPublicKey()); }
+  SECTION("TestSecretKey") { testJsonExport(dummy->getSecretKey()); }
 }
