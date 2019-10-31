@@ -22,6 +22,7 @@
 #include <string>
 #include <memory>
 #include <map>
+#include <vector>
 #include <e2ee/objects/PbcObjectImpl.hpp>
 #include <e2ee/objects/Element.hpp>
 #include <e2ee/memory.hpp>
@@ -53,6 +54,13 @@ class AbstractField :
 
   void addToJson(Document& doc) const override;
 
+  std::shared_ptr<Element> emptyElement() const;
+  std::shared_ptr<Element> randomElement() const;
+  /*
+  template <typename Iterator>
+  std::shared_ptr<Element> elementFromBytes(Iterator begin, Iterator end) const;
+   */
+
   static bool compareField(field_cptr f1, field_cptr f2, std::weak_ptr<PbcContext>);
 
  protected:
@@ -61,6 +69,43 @@ class AbstractField :
   parse_native(const rapidjson::Value& jobj);
 };
 
+class Element;
+struct PbcSerializableField: public virtual AbstractField {
+  virtual std::shared_ptr<Element> elementFromBytes(
+          std::vector<std::byte>::const_iterator begin,
+          std::vector<std::byte>::const_iterator end) const = 0;
+};
+
+/*
+template <typename Iterator>
+std::shared_ptr<Element>
+        AbstractField::elementFromBytes(Iterator begin, Iterator end) const {
+  std::vector<std::byte> buffer(begin, end);
+
+  auto e = emptyElement();
+  int bytes = 0;
+  if (0 == std::strcmp(get()->name, "curve")) {
+    bytes = element_from_bytes_x_only(e->get(),
+                                      reinterpret_cast<unsigned char *>(&buffer[0]));
+
+  } else {
+    bytes = element_from_bytes(e->get(),
+                               reinterpret_cast<unsigned char *>(&buffer[0]));
+  }
+  afgh_check(bytes == buffer.size(),
+             "invalid number of bytes read. expected %d, but read %d bytes.",
+             buffer.size(), bytes);
+
+  #ifndef NDEBUG
+  auto b = e->toBytes();
+  auto b2 = (e->operator!())->toBytes();
+  assert(std::equal(begin, end, b.begin()) ||
+         std::equal(begin, end, b2.begin()));
+  #endif
+
+  return e;
+}
+*/
 }  // namespace e2ee
 
 #endif /* AbstractField_hpp */

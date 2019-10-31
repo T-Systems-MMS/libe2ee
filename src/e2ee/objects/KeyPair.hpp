@@ -37,6 +37,17 @@ namespace e2ee {
 
     std::shared_ptr<Element> getPublicKey() { return std::shared_ptr<Element>(publicKey); }
     std::shared_ptr<Element> getSecretKey() { return std::shared_ptr<Element>(secretKey); }
+
+    std::string secretKeyAsJson() const {
+      auto ptr = std::shared_ptr<Element>(secretKey);
+      return ptr->exportJson();
+    }
+
+    std::string publicKeyAsJson() const {
+      auto ptr = std::shared_ptr<Element>(publicKey);
+      return ptr->exportJson();
+    }
+
   private:
     std::weak_ptr<Element> secretKey;
     std::weak_ptr<Element> publicKey;

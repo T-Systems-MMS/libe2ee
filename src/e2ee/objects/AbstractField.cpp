@@ -97,4 +97,16 @@ std::shared_ptr<AbstractField> PbcContext::getFieldFromJson(
           (getObjectFromJson(values, value, key, requireFinal));
 }
 
+std::shared_ptr<Element> AbstractField::emptyElement() const {
+  element_ptr element = allocate_unmanaged<element_s>();
+  element_init(element, const_cast<field_s*>(get()));
+  return lockedContext()->fromNative(element);
+}
+
+std::shared_ptr<Element> AbstractField::randomElement() const {
+  auto e = emptyElement();
+  e->randomize();
+  return e;
+}
+
 }  // namespace e2ee

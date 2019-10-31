@@ -77,4 +77,30 @@ bool MontFPField::equals(const MontFPField &other) const {
   if (0 != mpn_cmp(a_data->R3, b_data->R3, a_data->limbs)) { return false; }
   return true;
 }
+
+std::shared_ptr<Element>
+MontFPField::elementFromBytes(
+        std::vector<std::byte>::const_iterator begin,
+        std::vector<std::byte>::const_iterator end) const {
+  std::vector<std::byte> buffer(begin, end);
+
+  auto e = emptyElement();
+  int bytes = 0;
+  bytes = element_from_bytes(e->get(),
+                             reinterpret_cast<unsigned char *>(&buffer[0]));
+  e->updateStringValue();
+  afgh_check(bytes == buffer.size(),
+             "invalid number of bytes read. expected %d, but read %d bytes.",
+             buffer.size(), bytes);
+
+  #ifndef NDEBUG
+  auto b = e->toBytes();
+  auto b2 = (e->operator!())->toBytes();
+  assert(std::equal(begin, end, b.begin()) ||
+         std::equal(begin, end, b2.begin()));
+  #endif
+
+  return e;
+}
+
 }  // namespace e2ee

@@ -19,27 +19,28 @@
 #include <e2ee/objects/GlobalParameters.hpp>
 
 namespace e2ee {
-  
-  KeyPair::KeyPair(const std::shared_ptr<Element>& secretKey,
-                   const std::shared_ptr<Element>& publicKey)
-  : secretKey(secretKey), publicKey(publicKey) {
-    
-  }
-  
-  KeyPair::KeyPair(const std::shared_ptr<GlobalParameters>& global) {
-    auto sk = std::make_shared<Element>(global->lockedContext(),
-            global->pairing()->Zr());
-    global->lockedContext()->addObject(sk);
-    sk->randomize();
 
-    auto pk = *(global->g()) ^ *sk;
-    assert(global->g()->field()->getId() == pk->field()->getId());
-    secretKey = sk;
-    publicKey = pk;
-  }
+KeyPair::KeyPair(const std::shared_ptr<Element> &secretKey,
+                 const std::shared_ptr<Element> &publicKey)
+        : secretKey(secretKey), publicKey(publicKey) {
 
-  std::shared_ptr<Element>
-  KeyPair::getReEncryptionKeyFor(const std::shared_ptr<Element>& receiverPublicKey) {
-    return (*receiverPublicKey) ^ (!(*getSecretKey()));
-  }
+}
+
+KeyPair::KeyPair(const std::shared_ptr<GlobalParameters> &global) {
+  auto sk = std::make_shared<Element>(global->lockedContext(),
+                                      global->pairing()->Zr());
+  global->lockedContext()->addObject(sk);
+  sk->randomize();
+
+  auto pk = *(global->g()) ^*sk;
+  assert(global->g()->field()->getId() == pk->field()->getId());
+  secretKey = sk;
+  publicKey = pk;
+}
+
+std::shared_ptr<Element>
+KeyPair::getReEncryptionKeyFor(const std::shared_ptr<Element> &receiverPublicKey) {
+  return (*receiverPublicKey) ^ (!(*getSecretKey()));
+}
+
 }

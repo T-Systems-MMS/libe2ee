@@ -22,6 +22,7 @@
 
 #include <pbc.h>
 #include <memory>
+#include <vector>
 #include <e2ee/objects/CurveField.hpp>
 #include <e2ee/objects/AbstractField.hpp>
 #include <e2ee/objects/Element.hpp>
@@ -30,7 +31,9 @@ namespace e2ee {
 
 class CurveField :
         public PbcObjectTypeIdentifier<TYPE_FIELD, SUBTYPE_CURVE>,
-        public virtual AbstractField, public virtual PbcComparable<CurveField> {
+        public virtual AbstractField,
+        public virtual PbcComparable<CurveField>,
+        public virtual PbcSerializableField {
  public:
   using AbstractField::isFinal;
 
@@ -58,12 +61,12 @@ class CurveField :
   bool isValid() const override;
 
   void updateMembers() override;
-
+  std::shared_ptr<Element> elementFromBytes(
+          std::vector<std::byte>::const_iterator begin,
+          std::vector<std::byte>::const_iterator end) const override;
  private:
   PROPERTY(Element, a);
   PROPERTY(Element, b);
-  PROPERTY(Element, gen_no_cofac);
-  PROPERTY(Element, gen);
   bool initialized;
 };
 

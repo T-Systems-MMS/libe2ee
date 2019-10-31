@@ -15,13 +15,15 @@
  * along with libe2ee.  If not, see <http://www.gnu.org/licenses/lgpl>.
  */
 
-#include <e2ee/objects/AbstractField.hpp>
 #include <e2ee/objects/CurveField.hpp>
-#include <e2ee/PbcContext.hpp>
-#include <e2ee/json.hpp>
+#include <map>
+#include <vector>
 #include <pbc.h>
 #include <json-c/json_object.h>
-#include <iostream>
+#include <e2ee/objects/AbstractField.hpp>
+#include <e2ee/PbcContext.hpp>
+#include <e2ee/json.hpp>
+#include <aixlog.hpp>
 
 namespace e2ee {
 
@@ -47,8 +49,8 @@ void CurveField::updateMembers() {
   if (auto ctx = lockedContext()) {
     set_a(ctx->fromNative(&data->a[0]));
     set_b(ctx->fromNative(&data->b[0]));
-    set_gen(ctx->fromNative(&data->gen[0]));
-    set_gen_no_cofac(ctx->fromNative(&data->gen_no_cofac[0]));
+    //set_gen(ctx->fromNative(&data->gen[0]));
+    //set_gen_no_cofac(ctx->fromNative(&data->gen_no_cofac[0]));
   }
 }
 
@@ -64,8 +66,6 @@ void CurveField::addToJson(Document& doc) const {
 
   addJsonObject(doc, self, KEY_A, a());
   addJsonObject(doc, self, KEY_B, b());
-  addJsonObject(doc, self, KEY_GEN, gen());
-  addJsonObject(doc, self, KEY_GENNOCOFAC, gen_no_cofac());
 
   if (data->cofac != nullptr) {
     self.AddMember(KEY_COFAC,
@@ -82,8 +82,6 @@ void CurveField::addToJson(Document& doc) const {
 bool CurveField::isValid() const {
   FAIL_UNLESS_VALID(a);
   FAIL_UNLESS_VALID(b);
-  FAIL_UNLESS_VALID(gen);
-  FAIL_UNLESS_VALID(gen_no_cofac);
   FAIL_UNLESS(get()->init != NULL);
   return true;
 }
@@ -104,12 +102,11 @@ CurveField::finalize(
     status = 20;
   }
   if (!has_a() || !has_b()) {
-    return status;
+    return 30;
   }
-  status = 30;
 
-  if (! a()->isFinal()) { return status; }
-  if (! b()->isFinal()) { return status; }
+  if (! a()->isFinal()) { return 40; }
+  if (! b()->isFinal()) { return 50; }
 
   if (!initialized) {
     auto jobj = getJsonObject();
@@ -122,40 +119,11 @@ CurveField::finalize(
                         order_ptr,
                         cofac_ptr);
     initialized = true;
-    status = 50;
   }
   assert(initialized);
+  status = 60;
 
-  if (! has_gen()) {
-    auto __gen = elementFromJson(values, KEY_GEN);
-    if (__gen == nullptr) {
-      return status;
-    }
-    if (!__gen->isFinal()) {
-      return status;
-    }
-    set_gen(__gen);
-    curve_data_ptr cdp = reinterpret_cast<curve_data_ptr>(get()->data);
-    element_set(cdp->gen, gen()->get());
-    status = 70;
-  }
-
-  if (! has_gen_no_cofac()) {
-    auto __gen_no_cofac = elementFromJson(values, KEY_GENNOCOFAC);
-    if (__gen_no_cofac == nullptr) {
-      return status;
-    }
-    if (!__gen_no_cofac->isFinal()) {
-      return status;
-    }
-    set_gen_no_cofac(__gen_no_cofac);
-    gen_no_cofac()->get()->field = get();
-    curve_data_ptr cdp = reinterpret_cast<curve_data_ptr>(get()->data);
-    element_set(cdp->gen_no_cofac, gen_no_cofac()->get());
-    status = 80;
-  }
-
-  isFinal(initialized && gen_no_cofac()->isFinal() && gen()->isFinal());
+  isFinal(initialized );
   if (isFinal()) {
     status = 100;
     assert(isValid());
@@ -184,5 +152,31 @@ bool CurveField::equals(const CurveField &other) const {
     if (0 != mpz_cmp(a_data->quotient_cmp, b_data->quotient_cmp)) { return false; }
   }
   return true;
+}
+
+std::shared_ptr<Element>
+CurveField::elementFromBytes(
+        std::vector<std::byte>::const_iterator begin,
+        std::vector<std::byte>::const_iterator end) const {
+  std::vector<std::byte> buffer(begin, end);
+
+  auto e = emptyElement();
+  int bytes = 0;
+  bytes = element_from_bytes_x_only(e->get(),
+                                    reinterpret_cast<unsigned char *>(&buffer[0]));
+  e->updateStringValue();
+
+  afgh_check(bytes == buffer.size(),
+             "invalid number of bytes read. expected %d, but read %d bytes.",
+             buffer.size(), bytes);
+
+  #ifndef NDEBUG
+  auto b = e->toBytes();
+  auto b2 = (e->operator!())->toBytes();
+  assert(std::equal(begin, end, b.begin()) ||
+         std::equal(begin, end, b2.begin()));
+  #endif
+
+  return e;
 }
 }

@@ -97,11 +97,7 @@ Element::Element(std::shared_ptr<PbcContext> context,
     setId(idOf(&native_element));
 
     set_field(lockedContext()->fromNative(element->field));
-
-    char buf[2048];
-    element_snprint(&buf[0], sizeof(buf) / sizeof(buf[0]), &native_element);
-
-    value = std::string(buf);
+    updateStringValue();
     assert(isValid());
   }
 }
@@ -113,10 +109,7 @@ Element::Element(std::shared_ptr<PbcContext> context,
         : PbcObject(context, idOf(element), isFinal),
           PbcObjectImpl(element), _field(f) {
   if (isFinal) {
-    char buf[2048];
-    element_snprint(&buf[0], sizeof(buf) / sizeof(buf[0]), element);
-
-    value = std::string(buf);
+    updateStringValue();
   }
   assert(isValid());
 }
@@ -209,12 +202,18 @@ percent_t Element::finalize(
 
   /* we require a field to initialize the element */
   auto fptr = field();
-  if (fptr->get()->init == NULL) {
+  if (!fptr->isFinal()) {
     LOG(DEBUG) << COLOR(yellow) << "required field is not initialized yet" << std::endl;
     LOG(DEBUG) << "field type is    " << fptr->getSubtype() << std::endl;
     LOG(DEBUG) << "field id is      " << fptr->getId() << std::endl;
     LOG(DEBUG) << "field address is " << static_cast<PbcObject*>(fptr.get()) << std::endl << COLOR(none);
     return 50;
+  } else {
+    LOG(DEBUG)  << COLOR(green)
+                << "initializing element "
+                << getIdString()
+                << " now"
+                << COLOR(none) << std::endl;
   }
 
   element_init(get(), fptr->get());
@@ -229,8 +228,8 @@ percent_t Element::finalize(
   #endif  // NDEBUG
 
   assert(fptr->get() == get()->field);
-
   assert(get()->data != NULL);
+
   isFinal(true);
   assert(isValid());
   return 100;
@@ -289,6 +288,7 @@ std::shared_ptr<Element> Element::operator!() const {
 
 Element &Element::randomize() {
   element_random(get());
+  updateStringValue();
 
   /* enforce recalculation of id */
   set(get());
@@ -330,6 +330,43 @@ std::shared_ptr<Element> PbcContext::getElementFromJson(
         const JsonKey &key, bool requireFinal) {
   return e2ee::dynamic_pointer_cast<Element>
           (getObjectFromJson(values, value, key, requireFinal));
+}
+
+std::vector<std::byte> Element::toBytes() const {
+  int length = 0;
+
+  assert(nullptr != get()->field);
+  assert(nullptr != get()->field->name);
+  if (0 == std::strcmp(get()->field->name, "curve")) {
+    length = element_length_in_bytes_x_only(const_cast<element_s*>(get()));
+  } else {
+    length = element_length_in_bytes(const_cast<element_s *>(get()));
+  }
+
+  #ifndef NDEBUG
+  const auto full_length = element_length_in_bytes(const_cast<element_s*>(get()));
+  assert(length <= full_length);
+  #endif
+
+  std::vector<std::byte> buffer(length);
+
+  if (0 == std::strcmp(get()->field->name, "curve")) {
+    element_to_bytes_x_only(
+            reinterpret_cast<unsigned char *>(&buffer[0]),
+            const_cast<element_s *>(get()));
+  } else {
+    element_to_bytes(
+            reinterpret_cast<unsigned char *>(&buffer[0]),
+            const_cast<element_s *>(get()));
+  }
+  return buffer;
+}
+
+void Element::updateStringValue() {
+  char buf[2048];
+  element_snprint(&buf[0], sizeof(buf) / sizeof(buf[0]), get());
+
+  value = std::string(buf);
 }
 
 }  // namespace e2ee

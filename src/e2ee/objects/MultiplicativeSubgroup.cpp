@@ -102,7 +102,12 @@ percent_t MultiplicativeSubgroup::finalize(
     assert(get()->init != NULL);
   }
 
-  return 100;
+  // the superfield's superfield may not be final, so we check this here
+  if (isFinal()) {
+    return 100;
+  } else {
+    return 90;
+  }
 }
 
 }

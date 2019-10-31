@@ -194,7 +194,7 @@ void PbcContext::finalizeObjects(
         isFinal &= i.second->isFinal();
       }
     }
-    // std::cout << status/objects.size() << "% " << std::endl;
+    LOG(DEBUG) << status/objects.size() << "% " << std::endl;
 
     /*
      * prevent endless loops

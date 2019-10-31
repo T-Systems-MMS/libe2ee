@@ -25,7 +25,9 @@ namespace e2ee {
   
   class MontFPField:
           public PbcObjectTypeIdentifier<TYPE_FIELD, SUBTYPE_MONTFP>,
-          public AbstractField, PbcComparable<MontFPField> {
+          public virtual AbstractField,
+          public virtual PbcComparable<MontFPField>,
+          public virtual PbcSerializableField {
   public:
 
     MontFPField() = delete;
@@ -55,6 +57,10 @@ namespace e2ee {
     void updateMembers() override {}
     percent_t finalize(
             const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values) override { isFinal(true); return 100;}
+
+    std::shared_ptr<Element> elementFromBytes(
+            std::vector<std::byte>::const_iterator begin,
+            std::vector<std::byte>::const_iterator end) const override;
   };
   
 }

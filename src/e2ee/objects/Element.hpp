@@ -111,6 +111,9 @@ class Element :
   static std::string
   formatElementComponents(const std::vector<afgh_mpz_t> &values);
 
+  void updateStringValue();
+  std::vector<std::byte> toBytes() const;
+
  protected:
   bool equals(const Element &other) const final;
 

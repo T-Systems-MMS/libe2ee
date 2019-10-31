@@ -25,7 +25,7 @@ TEST_CASE("test element encryption", "[conversion][json]") {
 
   SECTION("TestFirstLevelEncryption") {
     auto kp = std::make_unique<e2ee::KeyPair>(global);
-    auto message1 = std::make_shared<e2ee::Element>(global->lockedContext(), global->pairing()->GT());
+    auto message1 = global->pairing()->GT()->randomElement();
     message1->randomize();
 
     auto ciphertext = std::make_shared<e2ee::Tuple>(
@@ -41,7 +41,7 @@ TEST_CASE("test element encryption", "[conversion][json]") {
     auto sender = std::make_unique<e2ee::KeyPair>(global);
     auto receiver = std::make_unique<e2ee::KeyPair>(global);
 
-    auto message1 = std::make_shared<e2ee::Element>(global->lockedContext(), global->pairing()->GT());
+    auto message1 = global->pairing()->GT()->randomElement();
     message1->randomize();
 
     auto ciphertext1 = std::make_shared<e2ee::Tuple>(

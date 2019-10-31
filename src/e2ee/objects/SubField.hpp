@@ -22,6 +22,7 @@
 #include <string>
 #include <cstring>
 #include <memory>
+#include <map>
 
 namespace e2ee {
 /* field that is defined by another field */
@@ -41,12 +42,10 @@ class SubField :
 
   SubField(std::shared_ptr<PbcContext>& context, const field_s *field)
           : AbstractField(field) {
-    if (isFinal()) {
-      auto superfield = reinterpret_cast<field_ptr>(field->data);
-      assert(superfield != nullptr);
-      set_superField(context->fromNative(superfield));
-      assert(has_superField());
-    }
+    auto superfield = reinterpret_cast<field_ptr>(field->data);
+    assert(superfield != nullptr);
+    set_superField(context->fromNative(superfield));
+    assert(has_superField());
   }
 
   SubField(std::weak_ptr<PbcContext> context, const rapidjson::Value &value)
@@ -70,7 +69,10 @@ class SubField :
 
   virtual void isFinal(bool f) override { AbstractField::isFinal(f); }
 
-  virtual bool isFinal() const noexcept override { return AbstractField::isFinal(); }
+  virtual bool isFinal() const noexcept override {
+    if (! has_superField())        { return false; }
+    if (! superField()->isFinal()) { return false; }
+    return AbstractField::isFinal(); }
 
  protected:
   virtual percent_t initField() {
@@ -99,7 +101,15 @@ percent_t SubField<F>::finalize(
 
   percent_t status = initField();
   isFinal(status == 100);
-  return status;
+
+  /* the finale state may depend on other factors as well,
+   * so we must check here if all this object is really final
+   */
+  if (isFinal()) {
+    return 100;
+  } else {
+    return 99;
+  }
 }
 
 template<class F>

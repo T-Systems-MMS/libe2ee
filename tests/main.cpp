@@ -6,7 +6,7 @@
 
 int main(int argc, char * argv[]) {
   AixLog::Log::init<AixLog::SinkCout>(
-          AixLog::Severity::info,
+          AixLog::Severity::trace,
           AixLog::Type::normal);
   Catch::Session().run( argc, argv );
 }

@@ -223,6 +223,7 @@ struct PbcComparable : public virtual PbcObject {
  protected:
   virtual bool equals(const T& other) const = 0;
 };
+
 /*
 template <class T>
 bool operator==(const std::shared_ptr<T>& a, const std::shared_ptr<T>& b) {
