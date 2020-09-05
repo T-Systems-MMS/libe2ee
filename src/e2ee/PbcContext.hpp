@@ -89,7 +89,7 @@ class PbcContext : public std::enable_shared_from_this<PbcContext> {
   }
 
   inline std::shared_ptr<e2ee::GlobalParameters> global() const {
-    return _global.lock();
+    return _global;
   }
 
   /*
@@ -202,7 +202,7 @@ class PbcContext : public std::enable_shared_from_this<PbcContext> {
   std::map<std::string_view, parser_t> parsers;
   uuid rootId;
 
-  std::weak_ptr<e2ee::GlobalParameters> _global;
+  std::shared_ptr<e2ee::GlobalParameters> _global;
 
   static const std::map<std::string_view, std::shared_ptr<FieldFactory>>
   constructors;

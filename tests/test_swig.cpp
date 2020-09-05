@@ -16,14 +16,18 @@
 TEST_CASE("SWIG: test conversion between formats", "[conversion]") {
 
   SECTION("TestFirstLevelEncryption") {
-    auto global = e2ee::createGlobal(160, 512);
+    auto context = e2ee::createContext();
+    auto global = e2ee::getGlobal(context);
+
     auto kp = e2ee::createKeyPair(global);
     auto dek = e2ee::generateDataEncryptionKey(global);
-    //auto aesKey = e2ee::kdf(dek, 256/8);
+    auto aesKey1 = e2ee::kdf256(dek);
 
     auto ciphertext = e2ee::encryptFirstLevel(kp->getPublicKey(), dek);
 
-    //auto message2 = e2ee::decryptFirstLevel(kp->getSecretKey(), ciphertext);
-    //REQUIRE(message1 == message2);
+    auto decryptedDek = e2ee::decryptFirstLevel(kp->getSecretKey(), ciphertext);
+    auto aesKey2 = e2ee::kdf256(decryptedDek);
+
+    REQUIRE_THAT(aesKey2, Catch::Equals<std::byte>(aesKey1));
   }
 }

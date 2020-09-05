@@ -7,3 +7,6 @@
 [submodule "src/lib/aixlog"]
 	path = src/lib/aixlog
 	url = https://github.com/badaix/aixlog.git
+[submodule "src/lib/sha2"]
+	path = src/lib/sha2
+	url = https://github.com/ogay/sha2.git

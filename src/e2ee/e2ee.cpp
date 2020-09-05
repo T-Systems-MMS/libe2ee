@@ -18,25 +18,31 @@
  */
 
 #include <memory>
+#include <vector>
+#include <algorithm>
 #include <e2ee/e2ee.hpp>
 #include <e2ee/objects/Element.hpp>
 #include <e2ee/PbcContext.hpp>
 #include <e2ee/objects/KeyPair.hpp>
 #include <e2ee/objects/Tuple.hpp>
+#include <sha2.h>
 
 namespace e2ee {
 
-std::shared_ptr<e2ee::GlobalParameters>
-createGlobal(int32_t rBits, int32_t qBits) {
-  auto context = e2ee::PbcContext::createInstance();
-  return std::make_shared<e2ee::GlobalParameters>(context, rBits, qBits);
+std::shared_ptr<e2ee::PbcContext> createContext() {
+  return e2ee::PbcContext::createInstance();
 }
 
-std::unique_ptr<e2ee::KeyPair>
+
+std::shared_ptr<e2ee::GlobalParameters> getGlobal(std::shared_ptr<e2ee::PbcContext> context) {
+  return context->global();
+}
+
+std::shared_ptr<e2ee::KeyPair>
 createKeyPair(std::shared_ptr<e2ee::GlobalParameters> global) {
   return std::make_unique<e2ee::KeyPair>(global);
 }
-
+/*
 std::pair<std::string, std::string>
         createKeyPair(int32_t rBits, int32_t qBits) {
   auto kp = createKeyPair(createGlobal(rBits, qBits));
@@ -45,7 +51,7 @@ std::pair<std::string, std::string>
           kp->secretKeyAsJson()
           );
 }
-
+*/
 
 std::shared_ptr<e2ee::Tuple> encryptFirstLevel(std::shared_ptr<e2ee::Element> publicKey, std::shared_ptr<e2ee::Element> dataElement) {
   auto converter = std::dynamic_pointer_cast<e2ee::PbcSerializableField>(publicKey->field());
@@ -72,6 +78,12 @@ std::string encryptFirstLevel(std::string publicKey, const std::vector<std::byte
   return "";
 }
 
+
+std::shared_ptr<e2ee::Element>
+        decryptFirstLevel( std::shared_ptr<e2ee::Element> secretKey, const std::shared_ptr<e2ee::Tuple> ciphertext) {
+  return ciphertext->decryptFirstLevel(secretKey);
+}
+
 std::vector<std::byte> decryptFirstLevel(std::string secretKey, const std::string& ciphertext) {
   return std::vector<std::byte>();
 }
@@ -82,8 +94,39 @@ std::shared_ptr<e2ee::Element> generateDataEncryptionKey(std::shared_ptr<e2ee::G
   return key;
 }
 
-std::vector<std::byte> kdf(std::shared_ptr<e2ee::Element> dek, std::size_t length) {
+std::vector<std::byte> kdf256(std::shared_ptr<e2ee::Element> dek) {
+  sha256_ctx ctx;
+  sha256_init(&ctx);
 
+  const auto dekBinary = dek->toBytes();
+  sha256_update(&ctx,
+          reinterpret_cast<const unsigned char*>(&dekBinary[0]),
+          dekBinary.size());
+
+  std::vector<std::byte> hash(256/8);
+  sha256_final(&ctx, reinterpret_cast<unsigned char*>(&hash[0]));
+
+  return hash;
+}
+
+std::shared_ptr<e2ee::Element> publicKey(std::shared_ptr<e2ee::KeyPair> kp) { return kp->getPublicKey(); }
+std::shared_ptr<e2ee::Element> secretKey(std::shared_ptr<e2ee::KeyPair> kp) { return kp->getSecretKey(); }
+
+constexpr char hexmap[] = {'0', '1', '2', '3', '4', '5', '6', '7',
+                           '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+
+std::string hexStr(const std::vector<std::byte>& bytes)
+{
+  std::string s(bytes.size() * 2, ' ');
+  for (int i = 0; i < bytes.size(); ++i) {
+    s[2 * i]     = hexmap[(int)(bytes[i] & (std::byte)(0xF0) >> 4)];
+    s[2 * i + 1] = hexmap[(int)(bytes[i] & (std::byte)(0x0F))];
+  }
+  return s;
+}
+
+const char* string (const std::string& str) {
+  return str.c_str();
 }
 
 }

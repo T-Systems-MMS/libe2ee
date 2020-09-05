@@ -161,7 +161,6 @@ CurveField::elementFromBytes(
   std::vector<std::byte> buffer(begin, end);
 
   auto e = emptyElement();
-  int bytes = 0;
   element_from_bytes_x_only(e->get(),
           reinterpret_cast<unsigned char *>(&buffer[0]));
 
@@ -175,10 +174,6 @@ CurveField::elementFromBytes(
   }
 
   e->updateStringValue();
-
-  afgh_check(bytes == buffer.size(),
-             "invalid number of bytes read. expected %d, but read %d bytes.",
-             buffer.size(), bytes);
 
   #ifndef NDEBUG
   auto b = e->toBytes();

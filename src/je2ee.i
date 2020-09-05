@@ -17,10 +17,12 @@
  * along with libe2ee.  If not, see <http://www.gnu.org/licenses/lgpl>.
  */
 
-%module e2ee
+%module je2ee
+%include "std_string.i"
+
 %{
 #include "e2ee/e2ee.hpp"
 using namespace e2ee;
 %}
 
-#include "e2ee/e2ee.hpp"
+%include "e2ee/e2ee.hpp"
