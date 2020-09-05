@@ -32,6 +32,7 @@
 #include <e2ee/objects/QuadraticField.hpp>
 #include <e2ee/objects/Element.hpp>
 #include <e2ee/objects/Pairing.hpp>
+#include <e2ee/objects/GlobalParameters.hpp>
 #include <boost/uuid/uuid.hpp>
 
 namespace e2ee {
@@ -55,6 +56,12 @@ PbcContext::PbcContext() :
   addParser<MultiplicativeSubgroup>();
   addParser<Pairing>();
   addParser<Element>();
+}
+
+context_ptr PbcContext::createInstance() {
+  auto ctx = context_ptr(new PbcContext());
+  ctx->_global = std::make_shared<e2ee::GlobalParameters>(ctx, 160, 512);
+  return ctx;
 }
 
 void PbcContext::constructObject(
@@ -90,7 +97,7 @@ void PbcContext::constructObject(
   }
 }
 
-rapidjson::Document
+std::shared_ptr<PbcObject>
 PbcContext::parseJson(const std::string &str) {
   rapidjson::Document doc;
   doc.Parse(str.c_str());
@@ -127,7 +134,7 @@ PbcContext::parseJson(const std::string &str) {
   assert(rootId != boost::uuids::nil_uuid());
   assert(hasObject(rootId));
   finalizeObjects(values);
-  return doc;
+  return this->at(rootId);
 }
 
 std::shared_ptr<PbcObject>

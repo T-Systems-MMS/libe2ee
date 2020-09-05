@@ -26,25 +26,64 @@
 
 namespace e2ee {
 
+std::shared_ptr<e2ee::GlobalParameters>
+createGlobal(int32_t rBits, int32_t qBits) {
+  auto context = e2ee::PbcContext::createInstance();
+  return std::make_shared<e2ee::GlobalParameters>(context, rBits, qBits);
+}
+
+std::unique_ptr<e2ee::KeyPair>
+createKeyPair(std::shared_ptr<e2ee::GlobalParameters> global) {
+  return std::make_unique<e2ee::KeyPair>(global);
+}
+
 std::pair<std::string, std::string>
         createKeyPair(int32_t rBits, int32_t qBits) {
-  auto context = e2ee::PbcContext::createInstance();
-  auto global = std::make_shared<e2ee::GlobalParameters>(context, rBits, qBits);
-  auto kp = std::make_unique<e2ee::KeyPair>(global);
+  auto kp = createKeyPair(createGlobal(rBits, qBits));
   return std::make_pair(
           kp->publicKeyAsJson(),
           kp->secretKeyAsJson()
           );
 }
 
-std::string encryptFirstLevel(std::string secretKey) {
+
+std::shared_ptr<e2ee::Tuple> encryptFirstLevel(std::shared_ptr<e2ee::Element> publicKey, std::shared_ptr<e2ee::Element> dataElement) {
+  auto converter = std::dynamic_pointer_cast<e2ee::PbcSerializableField>(publicKey->field());
+  auto context = publicKey->getContext().lock();
+  return std::make_shared<e2ee::Tuple>(
+          dataElement,
+          publicKey,
+          context->global(),
+          false);
+}
+
+std::string encryptFirstLevel(std::string publicKey, const std::vector<std::byte>& data) {
   auto context = e2ee::PbcContext::createInstance();
-  context->populate(secretKey);
+  auto global = std::make_shared<e2ee::GlobalParameters>(context, 160, 512);
+
+  auto key = e2ee::dynamic_pointer_cast<e2ee::Element>(context->populate(publicKey));
+  auto converter = std::dynamic_pointer_cast<e2ee::PbcSerializableField>(key->field());
+  auto dataElement = converter->elementFromBytes(data.begin(), data.end());
+  auto ciphertext = std::make_shared<e2ee::Tuple>(
+          dataElement,
+          key,
+          context->global(),
+          false);
   return "";
 }
 
-std::string encryptSecondLevel(std::string secretKey) {
-  return "";
+std::vector<std::byte> decryptFirstLevel(std::string secretKey, const std::string& ciphertext) {
+  return std::vector<std::byte>();
+}
+
+std::shared_ptr<e2ee::Element> generateDataEncryptionKey(std::shared_ptr<e2ee::GlobalParameters> global) {
+  auto key = global->pairing()->GT()->randomElement();
+  key->randomize();
+  return key;
+}
+
+std::vector<std::byte> kdf(std::shared_ptr<e2ee::Element> dek, std::size_t length) {
+
 }
 
 }

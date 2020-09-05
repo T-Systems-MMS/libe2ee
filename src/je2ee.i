@@ -19,8 +19,8 @@
 
 %module e2ee
 %{
-#include <e2ee/e2ee.hpp>
+#include "e2ee/e2ee.hpp"
 using namespace e2ee;
 %}
 
-#include <e2ee/e2ee.hpp>
+#include "e2ee/e2ee.hpp"

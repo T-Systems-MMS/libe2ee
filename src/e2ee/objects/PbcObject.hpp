@@ -62,15 +62,15 @@ using rapidjson::Document;
 using rapidjson::Value;
 
 namespace e2ee {
-  template<class T, class U>
-  std::shared_ptr<T> dynamic_pointer_cast(const std::shared_ptr<U> &sp) {
-    /*
+    /**
      * try to cast the object to the required type.
      *
      * If this fails, std::bad_cast will be thrown. This check is necessary,
      * because std::dynamic_pointer_cast behaves undefined if you try to
      * cast a non-matching object
      */
+  template<class T, class U>
+  std::shared_ptr<T> dynamic_pointer_cast(const std::shared_ptr<U> &sp) {
     auto& ignore = dynamic_cast<T &>(*sp);
     return std::dynamic_pointer_cast<T>(sp);
   }
@@ -202,6 +202,7 @@ class PbcObject {
   bool _isFinal;
   std::weak_ptr<rapidjson::Value> jobj;
   mutable std::weak_ptr<PbcContext> context;
+
 };
 
 template <class T>

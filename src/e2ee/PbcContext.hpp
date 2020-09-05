@@ -40,6 +40,7 @@ class Pairing;
 class AbstractField;
 class PbcObject;
 class PbcContext;
+class GlobalParameters;
 
 typedef std::shared_ptr<PbcContext> context_ptr;
 
@@ -52,16 +53,14 @@ typedef std::function<std::shared_ptr<PbcObject>(
 
 class PbcContext : public std::enable_shared_from_this<PbcContext> {
  public:
-  inline void populate(const std::string &json) {parseJson(json);}
+  inline std::shared_ptr<PbcObject> populate(const std::string &json) {return parseJson(json);}
 
   void clear() {
     objects.clear();
   }
 
-  /* enforce creation of a shared_ptr */
-  inline static context_ptr createInstance() {
-    return context_ptr(new PbcContext());
-  }
+  /** enforce creation of a shared_ptr */
+  static context_ptr createInstance();
 
   bool hasObject(const uuid &id) const;
   void addObject(const std::shared_ptr<PbcObject> &obj);
@@ -87,6 +86,10 @@ class PbcContext : public std::enable_shared_from_this<PbcContext> {
   }
   inline std::shared_ptr<Pairing> fromNative(const pairing_s *ptr) {
     return fromNative(ptr, PbcObject::idOf(ptr));
+  }
+
+  inline std::shared_ptr<e2ee::GlobalParameters> global() const {
+    return _global.lock();
   }
 
   /*
@@ -116,7 +119,7 @@ class PbcContext : public std::enable_shared_from_this<PbcContext> {
           const JsonKey &key,
           bool requireFinal = false);
 
-  rapidjson::Document parseJson(const std::string &str);
+  std::shared_ptr<PbcObject> parseJson(const std::string &str);
 
   void constructObject(
           const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values,
@@ -198,6 +201,9 @@ class PbcContext : public std::enable_shared_from_this<PbcContext> {
   std::map<uuid, PbcObject*> nativeObjects;
   std::map<std::string_view, parser_t> parsers;
   uuid rootId;
+
+  std::weak_ptr<e2ee::GlobalParameters> _global;
+
   static const std::map<std::string_view, std::shared_ptr<FieldFactory>>
   constructors;
 

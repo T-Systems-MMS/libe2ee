@@ -162,8 +162,18 @@ CurveField::elementFromBytes(
 
   auto e = emptyElement();
   int bytes = 0;
-  bytes = element_from_bytes_x_only(e->get(),
-                                    reinterpret_cast<unsigned char *>(&buffer[0]));
+  element_from_bytes_x_only(e->get(),
+          reinterpret_cast<unsigned char *>(&buffer[0]));
+
+  {
+    auto b = e->toBytes();
+    if (!std::equal(begin, end, b.begin())) {
+      auto e2 = emptyElement();
+      element_neg(e2->get(), e->get());
+      e = e2;
+    }
+  }
+
   e->updateStringValue();
 
   afgh_check(bytes == buffer.size(),

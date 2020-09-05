@@ -338,7 +338,7 @@ std::vector<std::byte> Element::toBytes() const {
   assert(nullptr != get()->field);
   assert(nullptr != get()->field->name);
   if (0 == std::strcmp(get()->field->name, "curve")) {
-    length = element_length_in_bytes_x_only(const_cast<element_s*>(get()));
+    length = element_length_in_bytes_compressed(const_cast<element_s*>(get()));
   } else {
     length = element_length_in_bytes(const_cast<element_s *>(get()));
   }
@@ -351,7 +351,7 @@ std::vector<std::byte> Element::toBytes() const {
   std::vector<std::byte> buffer(length);
 
   if (0 == std::strcmp(get()->field->name, "curve")) {
-    element_to_bytes_x_only(
+    element_to_bytes_compressed(
             reinterpret_cast<unsigned char *>(&buffer[0]),
             const_cast<element_s *>(get()));
   } else {
