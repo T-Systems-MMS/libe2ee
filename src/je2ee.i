@@ -18,11 +18,28 @@
  */
 
 %module je2ee
+%include "typemaps.i"
 %include "std_string.i"
+%include "arrays_java.i"
+%include "std_vector.i"
+%include "std_shared_ptr.i"
 
 %{
 #include "e2ee/e2ee.hpp"
 using namespace e2ee;
 %}
 
+%typemap(out) std::vector<std::byte> %{
+  jresult = (*jenv).NewByteArray($1.size());
+  (*jenv).SetByteArrayRegion(jresult, 0, $1.size(), (const jbyte*)&$1.at(0));
+%}
+
+%typemap(jni) std::vector<std::byte> "jbyteArray"
+%typemap(jtype) std::vector<std::byte> "byte[]"
+%typemap(jstype) std::vector<std::byte> "byte[]"
+%typemap(javain) std::vector<std::byte> "$javainput"
+%typemap(javaout) std::vector<std::byte> {
+return $jnicall;
+}
 %include "e2ee/e2ee.hpp"
+

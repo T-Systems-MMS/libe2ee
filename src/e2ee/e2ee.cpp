@@ -112,21 +112,4 @@ std::vector<std::byte> kdf256(std::shared_ptr<e2ee::Element> dek) {
 std::shared_ptr<e2ee::Element> publicKey(std::shared_ptr<e2ee::KeyPair> kp) { return kp->getPublicKey(); }
 std::shared_ptr<e2ee::Element> secretKey(std::shared_ptr<e2ee::KeyPair> kp) { return kp->getSecretKey(); }
 
-constexpr char hexmap[] = {'0', '1', '2', '3', '4', '5', '6', '7',
-                           '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
-
-std::string hexStr(const std::vector<std::byte>& bytes)
-{
-  std::string s(bytes.size() * 2, ' ');
-  for (int i = 0; i < bytes.size(); ++i) {
-    s[2 * i]     = hexmap[(int)(bytes[i] & (std::byte)(0xF0) >> 4)];
-    s[2 * i + 1] = hexmap[(int)(bytes[i] & (std::byte)(0x0F))];
-  }
-  return s;
-}
-
-const char* string (const std::string& str) {
-  return str.c_str();
-}
-
 }

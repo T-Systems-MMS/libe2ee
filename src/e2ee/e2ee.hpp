@@ -52,9 +52,6 @@ std::vector<std::byte> kdf256(std::shared_ptr<e2ee::Element> dek);
 std::shared_ptr<e2ee::Element> publicKey(std::shared_ptr<e2ee::KeyPair> kp);
 std::shared_ptr<e2ee::Element> secretKey(std::shared_ptr<e2ee::KeyPair> kp);
 
-std::string hexStr(const std::vector<std::byte>& bytes);
-const char* string(const std::string& str);
-
 }
 
 #endif //LIBE2EE_E2EE_HPP
