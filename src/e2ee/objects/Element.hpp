@@ -105,7 +105,7 @@ class Element :
 
   void addToJson(Document& doc) const override;
 
-  percent_t finalize(
+  e2ee::percent_t finalize(
           const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values) override;
 
   static std::string

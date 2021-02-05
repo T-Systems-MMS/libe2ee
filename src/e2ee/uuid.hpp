@@ -30,7 +30,7 @@ boost::uuids::uuid parse_uuid(const std::string &maybe_uuid,
 
   try {
     auto result = gen(maybe_uuid);
-    if (result.version() != uuid::version_unknown) {
+    if (result.version() != boost::uuids::uuid::version_unknown) {
       return result;
     } else if (force_valid) {
       afgh_throw_line("invalid UUID");

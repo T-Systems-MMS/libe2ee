@@ -54,9 +54,9 @@ namespace e2ee {
     return *c2() / (*c1() ^(! *secretKey));
   }
 
-  std::unique_ptr<Tuple> Tuple::reEncrypt(const std::shared_ptr<Element>& rk) {
+  std::shared_ptr<Tuple> Tuple::reEncrypt(const std::shared_ptr<Element>& rk) {
     if (! secondLevel) { return nullptr; }
     auto _c1 = global->pairing()->apply(c1(), rk);
-    return std::make_unique<Tuple>(_c1, c2(), *this, false);
+    return std::make_shared<Tuple>(_c1, c2(), *this, false);
   }
 }

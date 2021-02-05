@@ -38,7 +38,7 @@ class Tuple {
 
   std::shared_ptr<Element> decryptFirstLevel(const std::shared_ptr<Element> &secretKey);
 
-  std::unique_ptr<Tuple> reEncrypt(const std::shared_ptr<Element> &rk);
+  std::shared_ptr<Tuple> reEncrypt(const std::shared_ptr<Element> &rk);
 
  PROPERTY(Element, c1);
  PROPERTY(Element, c2);

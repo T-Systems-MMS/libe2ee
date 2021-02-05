@@ -2,6 +2,13 @@ cmake_minimum_required(VERSION 3.14)
 project(libe2ee)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/src/cmake")
+
+# https://stackoverflow.com/questions/51047978/cmake-could-not-find-jni
+# We are only interested in finding jni.h: we do not care about extended JVM
+# functionality or the AWT library.
+set(JAVA_AWT_LIBRARY NotNeeded)
+set(JAVA_JVM_LIBRARY NotNeeded)
+set(JAVA_AWT_INCLUDE_PATH NotNeeded)
 find_package(GMP REQUIRED)
 find_package(SWIG REQUIRED)
 find_package(JNI REQUIRED)

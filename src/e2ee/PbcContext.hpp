@@ -44,14 +44,13 @@ class GlobalParameters;
 
 typedef std::shared_ptr<PbcContext> context_ptr;
 
-using boost::uuids::uuid;
 typedef std::function<std::shared_ptr<PbcObject>(
         std::shared_ptr<PbcContext> context,
         const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values,
         const rapidjson::Value &value,
-        const uuid &id)> parser_t;
+        const boost::uuids::uuid &id)> parser_t;
 
-class PbcContext : public std::enable_shared_from_this<PbcContext> {
+class PbcContext {
  public:
   inline std::shared_ptr<PbcObject> populate(const std::string &json) {return parseJson(json);}
 
@@ -62,21 +61,21 @@ class PbcContext : public std::enable_shared_from_this<PbcContext> {
   /** enforce creation of a shared_ptr */
   static context_ptr createInstance();
 
-  bool hasObject(const uuid &id) const;
+  bool hasObject(const boost::uuids::uuid &id) const;
   void addObject(const std::shared_ptr<PbcObject> &obj);
-  void addNativeObject(const uuid &id, PbcObject *obj);
+  void addNativeObject(const boost::uuids::uuid &id, PbcObject *obj);
 
-  std::shared_ptr<PbcObject> at(const uuid &id);
-  std::shared_ptr<PbcObject> operator[](const uuid &id);
+  std::shared_ptr<PbcObject> at(const boost::uuids::uuid &id);
+  std::shared_ptr<PbcObject> operator[](const boost::uuids::uuid &id);
   std::shared_ptr<PbcObject> root() { return at(rootId); }
 
-  std::shared_ptr<Element> element(const uuid &id);
-  std::shared_ptr<AbstractField> field  (const uuid &id);
-  std::shared_ptr<Pairing> pairing(const uuid &id);
+  std::shared_ptr<Element> element(const boost::uuids::uuid &id);
+  std::shared_ptr<AbstractField> field  (const boost::uuids::uuid &id);
+  std::shared_ptr<Pairing> pairing(const boost::uuids::uuid &id);
 
-  std::shared_ptr<AbstractField> fromNative(const field_s *ptr, const uuid &id);
-  std::shared_ptr<Element> fromNative(const element_s *ptr, const uuid &id);
-  std::shared_ptr<Pairing> fromNative(const pairing_s *ptr, const uuid &id);
+  std::shared_ptr<AbstractField> fromNative(const field_s *ptr, const boost::uuids::uuid &id);
+  std::shared_ptr<Element> fromNative(const element_s *ptr, const boost::uuids::uuid &id);
+  std::shared_ptr<Pairing> fromNative(const pairing_s *ptr, const boost::uuids::uuid &id);
 
   inline std::shared_ptr<AbstractField> fromNative(const field_s *ptr) {
     return fromNative(ptr, PbcObject::idOf(ptr));
@@ -98,7 +97,7 @@ class PbcContext : public std::enable_shared_from_this<PbcContext> {
   std::shared_ptr<AbstractField> getFieldFromJson(
           const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values,
           const rapidjson::Value &value,
-          const JsonKey &key,
+          const e2ee::JsonKey &key,
           bool requireFinal = false);
 
   /*
@@ -107,7 +106,7 @@ class PbcContext : public std::enable_shared_from_this<PbcContext> {
   std::shared_ptr<Element> getElementFromJson(
           const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values,
           const rapidjson::Value &value,
-          const JsonKey &key,
+          const e2ee::JsonKey &key,
           bool requireFinal = false);
 
   /*
@@ -116,14 +115,14 @@ class PbcContext : public std::enable_shared_from_this<PbcContext> {
   std::shared_ptr<Pairing> getPairingFromJson(
           const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values,
           const rapidjson::Value &value,
-          const JsonKey &key,
+          const e2ee::JsonKey &key,
           bool requireFinal = false);
 
   std::shared_ptr<PbcObject> parseJson(const std::string &str);
 
   void constructObject(
           const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values,
-          const uuid &id,
+          const boost::uuids::uuid &id,
           std::shared_ptr<rapidjson::Value> value);
 
   void finalizeObjects(
@@ -137,7 +136,7 @@ class PbcContext : public std::enable_shared_from_this<PbcContext> {
     static_assert(std::is_constructible<T,
                           std::shared_ptr<PbcContext>,
     const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>&,
-                          const uuid &,
+                          const boost::uuids::uuid &,
                           const rapidjson::Value &>::value,
                   "type is not constructible with the required arguments");
 
@@ -146,7 +145,7 @@ class PbcContext : public std::enable_shared_from_this<PbcContext> {
 
     auto fct = [](std::shared_ptr<PbcContext> context,
                   const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values,
-                  const rapidjson::Value &value, const uuid &id) {
+                  const rapidjson::Value &value, const boost::uuids::uuid &id) {
       return std::make_shared<T>(context, values, id, value);
     };
 
@@ -164,43 +163,24 @@ class PbcContext : public std::enable_shared_from_this<PbcContext> {
   PbcContext &operator=(PbcContext &&) = delete;
 
 
-  uuid getIdFromJson(const rapidjson::Value &value, const JsonKey &key) const;
-
-  /*
-   * allocators
-   */
- private:
-  template <class RESULT, class B, class T, class ...Args>
-  RESULT createObject(Args... args) {
-    static_assert(std::is_base_of<B, T>::value || std::is_same<B, T>::value);
-    static_assert(std::is_base_of<std::shared_ptr<B>, RESULT>::value);
-    auto obj = std::make_shared<T>(shared_from_this(), args...);
-    addObject(obj);
-    return obj;
-  }
+  boost::uuids::uuid getIdFromJson(const rapidjson::Value &value, const e2ee::JsonKey &key) const;
 
  public:
-  template <class ...Args>
-  std::shared_ptr<Pairing> createPairing(Args... args) {
-    return createObject<std::shared_ptr<Pairing>, Pairing, Pairing>(args...);
-  }
+  std::shared_ptr<Pairing> createPairing(int32_t rBits, int32_t qBits);
 
-  template <class ...Args>
-  std::shared_ptr<Element> createElement(Args... args) {
-    return createObject<std::shared_ptr<Element>, Element, Element>(args...);
-  }
+  std::shared_ptr<Pairing> createPairing(const boost::uuids::uuid &id,
+                                         const pairing_s* pairing, bool isFinal);
 
-  template <class T, class ...Args>
-  std::shared_ptr<AbstractField> createField(Args... args) {
-    return createObject<std::shared_ptr<AbstractField>, AbstractField, T>(args...);
-  }
+  std::shared_ptr<Element> createElement(const boost::uuids::uuid &id,
+                                         element_ptr element, bool isFinal);
 
  private:
-  std::map<uuid, std::shared_ptr<PbcObject>> objects;
+  std::weak_ptr<PbcContext> self;
+  std::map<boost::uuids::uuid, std::shared_ptr<PbcObject>> objects;
   // this list will not be cleared on deconstruction
-  std::map<uuid, PbcObject*> nativeObjects;
+  std::map<boost::uuids::uuid, PbcObject*> nativeObjects;
   std::map<std::string_view, parser_t> parsers;
-  uuid rootId;
+  boost::uuids::uuid rootId;
 
   std::shared_ptr<e2ee::GlobalParameters> _global;
 
@@ -209,7 +189,8 @@ class PbcContext : public std::enable_shared_from_this<PbcContext> {
 
   std::shared_ptr<PbcObject>
   getObjectFromJson(
-          const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values,
+          const std::map<boost::uuids::uuid,
+          std::shared_ptr<rapidjson::Value>>& values,
           const rapidjson::Value &value,
           const JsonKey &key,
           bool requireFinal);

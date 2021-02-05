@@ -60,13 +60,14 @@ PbcContext::PbcContext() :
 
 context_ptr PbcContext::createInstance() {
   auto ctx = context_ptr(new PbcContext());
+  ctx->self = ctx;
   ctx->_global = std::make_shared<e2ee::GlobalParameters>(ctx, 160, 512);
   return ctx;
 }
 
 void PbcContext::constructObject(
         const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values,
-        const uuid &id,
+        const boost::uuids::uuid &id,
         std::shared_ptr<rapidjson::Value> value) {
   afgh_check(value->HasMember(KEY_TYPE), "missing 'type' key");
   afgh_check((*value)[KEY_TYPE.c_str()].IsString(), "invalid 'type' key");
@@ -83,8 +84,7 @@ void PbcContext::constructObject(
   afgh_check(parser != parsers.cend(),
              "missing parser for 'type' key: '%s'", type);
 
-  auto self = shared_from_this();
-  auto newObject = parser->second(self, values, *value, id);
+  auto newObject = parser->second(self.lock(), values, *value, id);
 
   newObject->setJsonObject(value);
   objects.insert(std::make_pair(id, newObject));
@@ -116,7 +116,7 @@ PbcContext::parseJson(const std::string &str) {
   std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>> values;
   for (const auto& obj : doc.GetObject()) {
     afgh_check(obj.value.IsObject(), "invalid object");
-    uuid id = parse_uuid(obj.name.GetString(), false);
+    boost::uuids::uuid id = parse_uuid(obj.name.GetString(), false);
     if (id == boost::uuids::nil_uuid()) {
       continue;
     }
@@ -142,7 +142,7 @@ PbcContext::getObjectFromJson(
         const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values,
         const rapidjson::Value& value,
         const JsonKey &key, bool requireFinal) {
-  uuid id = getIdFromJson(value, key);
+  boost::uuids::uuid id = getIdFromJson(value, key);
 
   auto iter = objects.find(id);
   if (iter == objects.end()) {
@@ -169,9 +169,9 @@ PbcContext::getObjectFromJson(
   return iter->second;
 }
 
-uuid PbcContext::getIdFromJson(const rapidjson::Value &value, const JsonKey &key) const {
+boost::uuids::uuid PbcContext::getIdFromJson(const rapidjson::Value &value, const JsonKey &key) const {
   static boost::uuids::string_generator gen;
-  const uuid id = gen(JSON_GET_STRING(value, key));
+  const boost::uuids::uuid id = gen(JSON_GET_STRING(value, key));
   return id;
 }
 
@@ -217,7 +217,7 @@ void PbcContext::finalizeObjects(
   }
 }
 
-bool PbcContext::hasObject(const uuid &id) const {
+bool PbcContext::hasObject(const boost::uuids::uuid &id) const {
   return ((objects.find(id) != objects.end()) ||
           (nativeObjects.find(id) != nativeObjects.end()));
 }
@@ -233,7 +233,7 @@ void PbcContext::addObject(const std::shared_ptr<PbcObject> &obj) {
   assert(hasObject(obj->getId()));
 }
 
-void PbcContext::addNativeObject(const uuid &id, PbcObject *obj) {
+void PbcContext::addNativeObject(const boost::uuids::uuid &id, PbcObject *obj) {
   auto iter = nativeObjects.find(id);
   if (iter == nativeObjects.end()) {
     nativeObjects.insert(std::make_pair(id, obj));
@@ -242,7 +242,7 @@ void PbcContext::addNativeObject(const uuid &id, PbcObject *obj) {
 }
 
 
-std::shared_ptr<PbcObject> PbcContext::at(const uuid &id) {
+std::shared_ptr<PbcObject> PbcContext::at(const boost::uuids::uuid &id) {
   auto iter1 = objects.find(id);
   if (iter1 != objects.end()) {
     return iter1->second;
@@ -250,7 +250,7 @@ std::shared_ptr<PbcObject> PbcContext::at(const uuid &id) {
   throw std::out_of_range(boost::uuids::to_string(id));
 }
 
-std::shared_ptr<PbcObject> PbcContext::operator[](const uuid &id) {
+std::shared_ptr<PbcObject> PbcContext::operator[](const boost::uuids::uuid &id) {
   /*
   auto iter2 = nativeObjects.find(id);
   if (iter2 != nativeObjects.end()) {
@@ -260,7 +260,7 @@ std::shared_ptr<PbcObject> PbcContext::operator[](const uuid &id) {
   return objects[id];
 }
 
-std::shared_ptr<AbstractField> PbcContext::fromNative(const field_s *ptr, const uuid &id) {
+std::shared_ptr<AbstractField> PbcContext::fromNative(const field_s *ptr, const boost::uuids::uuid &id) {
   auto iter = objects.find(id);
   if(iter != objects.end()) {
     return e2ee::dynamic_pointer_cast<AbstractField>(iter->second);
@@ -278,7 +278,7 @@ std::shared_ptr<AbstractField> PbcContext::fromNative(const field_s *ptr, const 
   /*
    * construct object and return its id
    */
-  std::shared_ptr<AbstractField> f = (*c->second)(shared_from_this(), id, ptr, true);
+  std::shared_ptr<AbstractField> f = (*c->second)(self.lock(), id, ptr, true);
   assert(f != nullptr);
   assert(f->getId() == id);
   addObject(f);
@@ -286,7 +286,29 @@ std::shared_ptr<AbstractField> PbcContext::fromNative(const field_s *ptr, const 
   return f;
 }
 
-std::shared_ptr<Pairing> PbcContext::fromNative(const pairing_s* obj, const uuid &id) {
+std::shared_ptr<Pairing> PbcContext::createPairing(int32_t rBits, int32_t qBits) {
+  auto obj = std::make_shared<Pairing>(self.lock(), rBits, qBits);
+  addObject(std::dynamic_pointer_cast<PbcObject>(obj));
+  return obj;
+}
+
+std::shared_ptr<Pairing> PbcContext::createPairing(
+        const boost::uuids::uuid &id,
+        const pairing_s* pairing,
+        bool isFinal) {
+  auto obj = std::make_shared<Pairing>(self.lock(), id, pairing, isFinal);
+  addObject(std::dynamic_pointer_cast<PbcObject>(obj));
+  return obj;
+}
+
+std::shared_ptr<Element> PbcContext::createElement(const boost::uuids::uuid &id,
+                                       element_ptr element, bool isFinal) {
+  auto obj = std::make_shared<Element>(self.lock(), id, element, isFinal);
+  addObject(std::dynamic_pointer_cast<PbcObject>(obj));
+  return obj;
+}
+
+std::shared_ptr<Pairing> PbcContext::fromNative(const pairing_s* obj, const boost::uuids::uuid &id) {
   auto iter = objects.find(id);
   if (iter != objects.end()) {
     return e2ee::dynamic_pointer_cast<Pairing>(iter->second);
@@ -296,7 +318,7 @@ std::shared_ptr<Pairing> PbcContext::fromNative(const pairing_s* obj, const uuid
 }
 
 
-std::shared_ptr<Element> PbcContext::fromNative(const element_s* obj, const uuid &id) {
+std::shared_ptr<Element> PbcContext::fromNative(const element_s* obj, const boost::uuids::uuid &id) {
   auto iter = objects.find(id);
   if (iter != objects.end()) {
     return e2ee::dynamic_pointer_cast<Element>(iter->second);
@@ -305,13 +327,13 @@ std::shared_ptr<Element> PbcContext::fromNative(const element_s* obj, const uuid
   return createElement(id, const_cast<element_ptr>(obj), true);
 }
 
-std::shared_ptr<Element> PbcContext::element(const uuid &id) {
+std::shared_ptr<Element> PbcContext::element(const boost::uuids::uuid &id) {
   return e2ee::dynamic_pointer_cast<Element>(at(id));
 }
-std::shared_ptr<AbstractField>   PbcContext::field  (const uuid &id) {
+std::shared_ptr<AbstractField>   PbcContext::field  (const boost::uuids::uuid &id) {
   return e2ee::dynamic_pointer_cast<AbstractField>(at(id));
 }
-std::shared_ptr<Pairing> PbcContext::pairing(const uuid &id) {
+std::shared_ptr<Pairing> PbcContext::pairing(const boost::uuids::uuid &id) {
   return e2ee::dynamic_pointer_cast<Pairing>(at(id));
 }
 }  // namespace e2ee

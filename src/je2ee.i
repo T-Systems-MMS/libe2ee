@@ -18,16 +18,24 @@
  */
 
 %module je2ee
+
 %include "typemaps.i"
 %include "std_string.i"
 %include "arrays_java.i"
 %include "std_vector.i"
 %include "std_shared_ptr.i"
 
-%{
-#include "e2ee/e2ee.hpp"
-using namespace e2ee;
-%}
+%shared_ptr(e2ee::PbcContext)
+%shared_ptr(e2ee::PbcObject)
+%shared_ptr(e2ee::GlobalParameters)
+%shared_ptr(e2ee::Element)
+%shared_ptr(e2ee::Tuple)
+%shared_ptr(e2ee::KeyPair)
+%shared_ptr(e2ee::Pairing)
+//%shared_ptr(AbstractField)
+//%shared_ptr(boost::uuids::uuid)
+
+%ignore operator[];
 
 %typemap(out) std::vector<std::byte> %{
   jresult = (*jenv).NewByteArray($1.size());
@@ -41,5 +49,24 @@ using namespace e2ee;
 %typemap(javaout) std::vector<std::byte> {
 return $jnicall;
 }
-%include "e2ee/e2ee.hpp"
+%{
+#include <e2ee/PbcContext.hpp>
+#include <e2ee/objects/GlobalParameters.hpp>
+#include <e2ee/objects/Tuple.hpp>
+#include <e2ee/objects/KeyPair.hpp>
+
+#include <e2ee/e2ee.hpp>
+using namespace e2ee;
+%}
+%include <e2ee/PbcContext.hpp>
+//%include <e2ee/objects/PbcObject.hpp>
+%include <e2ee/objects/GlobalParameters.hpp>
+%include <e2ee/objects/Element.hpp>
+%include <e2ee/objects/Tuple.hpp>
+%include <e2ee/objects/KeyPair.hpp>
+%include <e2ee/objects/Pairing.hpp>
+%include <e2ee/e2ee.hpp>
+
+
+
 

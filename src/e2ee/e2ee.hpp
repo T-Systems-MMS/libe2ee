@@ -25,13 +25,11 @@
 #include <memory>
 #include <vector>
 
-namespace e2ee {
+#include <e2ee/PbcContext.hpp>
+#include <e2ee/objects/KeyPair.hpp>
+#include <e2ee/objects/Tuple.hpp>
 
-class PbcContext;
-class GlobalParameters;
-class Element;
-class Tuple;
-class KeyPair;
+namespace e2ee {
 
 std::shared_ptr<e2ee::PbcContext> createContext();
 std::shared_ptr<e2ee::GlobalParameters> getGlobal(std::shared_ptr<e2ee::PbcContext>);
