@@ -34,7 +34,7 @@ public:
         int ret = snprintf(
                 message,
                 sizeof(message)-1,
-                "In %512s(%d): %512s", file, line, buffer);
+                "In %256s(%d): %256s", file, line, buffer);
         if (ret < 0) {
           abort();
         }

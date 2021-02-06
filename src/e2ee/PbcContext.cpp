@@ -84,7 +84,7 @@ void PbcContext::constructObject(
 
   const auto parser = parsers.find(type);
   afgh_check(parser != parsers.cend(),
-             "missing parser for 'type' key: '%s'", type);
+             "missing parser for 'type' key: '%s'", type.c_str());
 
   auto newObject = parser->second(self.lock(), values, *value, id);
 
