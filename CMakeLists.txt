@@ -27,7 +27,7 @@ include_directories("${PROJECT_SOURCE_DIR}/src/lib/rapidjson/include")
 include_directories("${PROJECT_SOURCE_DIR}/src/lib/aixlog/include")
 include_directories("${PROJECT_SOURCE_DIR}/src/lib/sha2")
 include_directories(${JNI_INCLUDE_DIRS})
-add_subdirectory("${PROJECT_SOURCE_DIR}/src/lib/pbc")
+add_subdirectory("${PROJECT_SOURCE_DIR}/src/lib/pbc_cmake")
 
 include_directories("${PROJECT_SOURCE_DIR}/src")
 include_directories("${PROJECT_SOURCE_DIR}/src/lib/pbc/include")
