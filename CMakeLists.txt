@@ -12,6 +12,7 @@ set(JAVA_AWT_INCLUDE_PATH NotNeeded)
 find_package(GMP REQUIRED)
 find_package(SWIG REQUIRED)
 find_package(JNI REQUIRED)
+find_package(Boost)
 include(${SWIG_USE_FILE})
 
 add_compile_options("-fsanitize=address")
@@ -31,6 +32,7 @@ add_subdirectory("${PROJECT_SOURCE_DIR}/src/lib/pbc_cmake")
 
 include_directories("${PROJECT_SOURCE_DIR}/src")
 include_directories("${PROJECT_SOURCE_DIR}/src/lib/pbc/include")
+include_directories(${Boost_INCLUDE_DIRS})
 
 
 add_library(e2ee SHARED ${E2EE_SRCS} ${SHA2_SRCS})
