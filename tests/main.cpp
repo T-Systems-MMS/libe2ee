@@ -10,13 +10,13 @@
 int main(int argc, char * argv[]) {
   AixLog::Log::init<AixLog::SinkCout>(
           AixLog::Severity::trace);
-  Catch::Session().run( argc, argv );
+  return Catch::Session().run( argc, argv );
 }
 
 #else
 
 int main(int argc, char * argv[]) {
-  Catch::Session().run( argc, argv );
+  return Catch::Session().run( argc, argv );
 }
 #endif
 
