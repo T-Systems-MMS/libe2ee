@@ -9,7 +9,7 @@
 #include <gmp.h>
 #include <string>
 #include <memory>
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 #include <e2ee/conversions.hpp>
 
 static std::unique_ptr<std::string>

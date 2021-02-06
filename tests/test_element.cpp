@@ -9,7 +9,7 @@
 #include <string>
 #include <iostream>
 #include <cmath>
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <e2ee/objects/Pairing.hpp>
 #include <e2ee/objects/Element.hpp>
