@@ -20,9 +20,6 @@
 #ifndef afgh_pbc_wrapper_hpp
 #define afgh_pbc_wrapper_hpp
 
-#include <e2ee/errors.cpp>
-#include <e2ee/objects/PbcObject.hpp>
-#include <e2ee/PbcContext.hpp>
 #include <pbc.h>
 #include <string>
 #include <memory>
@@ -32,6 +29,9 @@
 #include <sstream>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
+#include <e2ee/errors.cpp>
+#include <e2ee/objects/PbcObject.hpp>
+#include <e2ee/PbcContext.hpp>
 
 namespace e2ee {
 class PbcContext;
@@ -51,12 +51,9 @@ class PbcObjectImpl : public virtual PbcObject {
 
   virtual ~PbcObjectImpl() {}
 
-  T *get() throw() { return const_cast<T *>(wrappedObject); }
+  T *get() noexcept { return const_cast<T *>(wrappedObject); }
 
-  const T *get() const throw() { return wrappedObject; }
-
-  template<class E>
-  std::shared_ptr<E> getObject(const boost::uuids::uuid &id, bool requireFinal = false);
+  const T *get() const noexcept { return wrappedObject; }
 
   inline std::shared_ptr<AbstractField> fieldFromJson(
           const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values,
@@ -92,27 +89,5 @@ class PbcObjectImpl : public virtual PbcObject {
   const T *wrappedObject;
 };
 
-template<class T>
-template<class E>
-std::shared_ptr<E> PbcObjectImpl<T>::getObject(const boost::uuids::uuid &id,
-                                               bool requireFinal) {
-  if (getContext() == nullptr) {
-    return nullptr;
-  } else {
-    return std::dynamic_pointer_cast<E>(getContext()->getObject(id, requireFinal));
-  }
-}
-/*
-template<class T>
-template<class E>
-object_ref<E> PbcObjectImpl<T>::getObjectFromJson(const JsonKey &key,
-                                                       bool requireFinal) {
-  afgh_check(hasJsonObject(), "error in internal data types");
-  return std::dynamic_pointer_cast<E>(
-          lockedContext()->getObjectFromJson(getJsonObject(), key, requireFinal));
-
-  afgh_throw_line("no object context available");
-}
- */
 }  // namespace e2ee
 #endif /* afgh_pbc_wrapper_hpp */

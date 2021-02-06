@@ -17,6 +17,7 @@
 
 #include <e2ee/memory.hpp>
 #include <cstdlib>
+#include <cstring>
 #include <map>
 
 static
