@@ -19,7 +19,6 @@
 #include <map>
 #include <vector>
 #include <pbc.h>
-#include <json-c/json_object.h>
 #include <e2ee/objects/AbstractField.hpp>
 #include <e2ee/PbcContext.hpp>
 #include <e2ee/json.hpp>
