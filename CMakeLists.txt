@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.14)
 project(libe2ee)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/src/cmake")
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # https://stackoverflow.com/questions/51047978/cmake-could-not-find-jni
 # We are only interested in finding jni.h: we do not care about extended JVM
