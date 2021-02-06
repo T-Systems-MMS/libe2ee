@@ -24,7 +24,7 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/prettywriter.h>
 #include <boost/uuid/uuid.hpp>
-#include <boost/uuid/name_generator_sha1.hpp>
+#include <boost/uuid/name_generator.hpp>
 #include <e2ee/objects/PbcObject.hpp>
 #include <e2ee/PbcContext.hpp>
 #include <e2ee/conversions.hpp>
@@ -33,7 +33,7 @@ namespace e2ee {
 
 boost::uuids::uuid
 PbcObject::idOf(const void *item) {
-  boost::uuids::name_generator_sha1 g(boost::uuids::ns::url());
+  boost::uuids::name_generator_latest g(boost::uuids::ns::url());
   std::stringstream ss;
   ss << "urn:address:" << std::hex << item;
   return g(ss.str());
