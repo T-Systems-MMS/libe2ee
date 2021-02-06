@@ -37,7 +37,9 @@ PbcObject::idOf(const void *item) {
   #if BOOST_VERSION >= 106800
   static boost::uuids::name_generator_latest g(boost::uuids::ns::url());
   #else
-  static boost::uuids::name_generator g(boost::uuids::ns::url());
+  boost::uuids::string_generator sg;
+  boost::uuids::uuid ugen = sg("{6ba7b811-9dad-11d1-80b4-00c04fd430c8}");
+  boost::uuids::name_generator g(ugen);
   #endif
   std::stringstream ss;
   ss << "urn:address:" << std::hex << item;
