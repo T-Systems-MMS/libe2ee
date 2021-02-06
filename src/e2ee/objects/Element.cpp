@@ -27,6 +27,7 @@ extern "C" {
 #include <memory>
 #include <utility>
 #include <vector>
+#include <cctype>
 #include <aixlog.hpp>
 #include <e2ee/objects/Element.hpp>
 #include <e2ee/objects/Pairing.hpp>
@@ -149,7 +150,7 @@ void Element::addToJson(Document& doc) const {
   /* remove all characters we do not want */
   size_t dst = 0;
   for (size_t src = 0; buf[src] != '\0'; ++src) {
-    if (isnumber(buf[src]) || buf[src] == ',' || buf[src] == 'O') {
+    if (std::isdigit(buf[src]) || buf[src] == ',' || buf[src] == 'O') {
       buf[dst] = buf[src];
       ++dst;
     }
