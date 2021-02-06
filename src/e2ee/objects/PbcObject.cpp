@@ -23,9 +23,10 @@
 #include <sstream>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/prettywriter.h>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/name_generator.hpp>
 #include <e2ee/objects/PbcObject.hpp>
 #include <e2ee/PbcContext.hpp>
-#include <e2ee/errors.hpp>
 #include <e2ee/conversions.hpp>
 
 namespace e2ee {
