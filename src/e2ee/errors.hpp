@@ -31,7 +31,13 @@ public:
         vsnprintf(buffer, sizeof(buffer)-1, fmt, args);
         va_end(args);
         
-        snprintf(message, sizeof(message)-1, "In %s(%d): %s", file, line, buffer);
+        int ret = snprintf(
+                message,
+                sizeof(message)-1,
+                "In %512s(%d): %512s", file, line, buffer);
+        if (ret < 0) {
+          abort();
+        }
     }
     
     const char* what() const throw() { return &message[0]; }
