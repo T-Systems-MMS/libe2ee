@@ -25,6 +25,7 @@
 #include <rapidjson/prettywriter.h>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/name_generator.hpp>
+#include <boost/version.hpp>
 #include <e2ee/objects/PbcObject.hpp>
 #include <e2ee/PbcContext.hpp>
 #include <e2ee/conversions.hpp>
@@ -33,7 +34,11 @@ namespace e2ee {
 
 boost::uuids::uuid
 PbcObject::idOf(const void *item) {
-  boost::uuids::name_generator_latest g(boost::uuids::ns::url());
+  #if BOOST_VERSION >= 106800
+  static boost::uuids::name_generator_latest g(boost::uuids::ns::url());
+  #else
+  static boost::uuids::name_generator g(boost::uuids::ns::url());
+  #endif
   std::stringstream ss;
   ss << "urn:address:" << std::hex << item;
   return g(ss.str());
