@@ -28,7 +28,9 @@ extern "C" {
 #include <utility>
 #include <vector>
 #include <cctype>
+#if !(defined(__GNUC__) && defined(__APPLE__))
 #include <aixlog.hpp>
+#endif
 #include <e2ee/objects/Element.hpp>
 #include <e2ee/objects/Pairing.hpp>
 #include <e2ee/objects/AbstractField.hpp>
@@ -204,17 +206,21 @@ percent_t Element::finalize(
   /* we require a field to initialize the element */
   auto fptr = field();
   if (!fptr->isFinal()) {
+#if !(defined(__GNUC__) && defined(__APPLE__))
     LOG(DEBUG) << COLOR(yellow) << "required field is not initialized yet" << std::endl;
     LOG(DEBUG) << "field type is    " << fptr->getSubtype() << std::endl;
     LOG(DEBUG) << "field id is      " << fptr->getId() << std::endl;
     LOG(DEBUG) << "field address is " << static_cast<PbcObject*>(fptr.get()) << std::endl << COLOR(none);
+#endif
     return 50;
   } else {
+#if !(defined(__GNUC__) && defined(__APPLE__))
     LOG(DEBUG)  << COLOR(green)
                 << "initializing element "
                 << getIdString()
                 << " now"
                 << COLOR(none) << std::endl;
+#endif
   }
 
   element_init(get(), fptr->get());

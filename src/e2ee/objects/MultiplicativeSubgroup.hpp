@@ -18,13 +18,13 @@
 #ifndef MultiplicativeGroup_h
 #define MultiplicativeGroup_h
 
-#include <e2ee/objects/SubField.hpp>
+#include <string>
 #include <memory>
+#include <e2ee/objects/SubField.hpp>
 
 namespace e2ee {
 
 class MultiplicativeSubgroup :
-        public PbcObjectTypeIdentifier<TYPE_FIELD, SUBTYPE_MULTIPLICATIVE>,
         public SubField<MultiplicativeSubgroup> {
  public:
   MultiplicativeSubgroup() = delete;
@@ -43,6 +43,11 @@ class MultiplicativeSubgroup :
                          const rapidjson::Value &value)
           : PbcObject(context, id, false),
           SubField(context, value) {}
+
+  const std::string &getSubtype() const noexcept override {
+    static std::string value = SUBTYPE_MULTIPLICATIVE;
+    return value;
+  }
 
   void addToJson(Document& doc) const override;
 

@@ -36,7 +36,7 @@ boost::uuids::random_generator PbcObject::gen;
 
 boost::uuids::uuid
 PbcObject::idOf(const void *item) {
-  static boost::uuids::name_generator_latest gen(boost::uuids::ns::url());
+  static boost::uuids::name_generator_sha1 gen(boost::uuids::ns::url());
   std::stringstream ss;
   ss << "urn:address:" << std::hex << item;
   return gen(ss.str());

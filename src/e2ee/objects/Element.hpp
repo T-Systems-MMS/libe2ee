@@ -22,12 +22,12 @@
 
 #include <pbc.h>
 #include <memory>
-#include <list>
 #include <vector>
+#include <map>
+#include <string>
 #include <boost/uuid/uuid.hpp>
 #include <e2ee/objects/PbcObject.hpp>
 #include <e2ee/objects/PbcObjectImpl.hpp>
-#include <e2ee/objects/PbcObjectTypeIdentifier.hpp>
 
 namespace e2ee {
 
@@ -35,9 +35,8 @@ class Pairing;
 class AbstractField;
 
 class Element :
-        public PbcObjectTypeIdentifier<TYPE_ELEMENT, SUBTYPE_GENERIC>,
-        public PbcObjectImpl<struct element_s>,
-                public PbcComparable<Element> {
+ public ElementWrapper,
+ public e2ee::PbcComparable<Element> {
  public:
   Element() = delete;
   Element(Element&&) = delete;
@@ -55,10 +54,12 @@ class Element :
    * @param context
    * @param fieldId
    */
-  Element(std::shared_ptr<PbcContext> context, const std::shared_ptr<AbstractField>& _field);
+  Element(std::shared_ptr<PbcContext> context,
+          const std::shared_ptr<AbstractField>& _field);
 
   Element(std::shared_ptr<PbcContext> catalog,
-          const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values,
+          const std::map<boost::uuids::uuid,
+          std::shared_ptr<rapidjson::Value>>& values,
           const boost::uuids::uuid &id,
           const rapidjson::Value &value);
 
@@ -75,6 +76,15 @@ class Element :
 
   // normal assignment operator
   Element &operator=(const Element &);
+
+  const std::string &getType() const noexcept override {
+    static std::string value = TYPE_ELEMENT;
+    return value;
+  }
+  const std::string &getSubtype() const noexcept override {
+    static std::string value = SUBTYPE_GENERIC;
+    return value;
+  }
 
   std::shared_ptr<Element> initSameAs() const;
 
@@ -106,7 +116,8 @@ class Element :
   void addToJson(Document& doc) const override;
 
   e2ee::percent_t finalize(
-          const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values) override;
+          const std::map<boost::uuids::uuid,
+          std::shared_ptr<rapidjson::Value>>& values) override;
 
   static std::string
   formatElementComponents(const std::vector<afgh_mpz_t> &values);

@@ -24,7 +24,6 @@
 namespace e2ee {
 
 class QuadraticField :
-        public PbcObjectTypeIdentifier<TYPE_FIELD, SUBTYPE_QUADRATIC>,
         public SubField<QuadraticField> {
  public:
 
@@ -46,6 +45,11 @@ class QuadraticField :
           const boost::uuids::uuid &id,
           const rapidjson::Value &value)
           : PbcObject(context, id, false), SubField(context, value) {}
+
+  const std::string &getSubtype() const noexcept override {
+    static std::string value = SUBTYPE_QUADRATIC;
+    return value;
+  }
 
  protected:
   percent_t initField() override;

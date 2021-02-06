@@ -52,7 +52,7 @@ if (false == (condition)) { return false; }
 #define PROPERTY(type, name) \
  public: \
        std::shared_ptr<type> name()       { return std::shared_ptr<type>(_##name); } \
- const std::shared_ptr<type> name() const {return std::shared_ptr<type>(_##name);} \
+       std::shared_ptr<type> name() const {return std::shared_ptr<type>(_##name);} \
  void set_##name(const std::shared_ptr<type>& val) { _##name = val; } \
  bool has_##name() const { return static_cast<bool>(_##name.lock()); } \
  private: \
@@ -110,6 +110,10 @@ class PbcObject {
           nativeId(boost::uuids::nil_uuid()),
           context(ctx) {
   }
+
+  PbcObject(PbcObject&&) = delete;
+  PbcObject(const PbcObject&) = delete;
+  PbcObject& operator=(PbcObject&&) = delete;
 
   std::string exportJson() const;
 

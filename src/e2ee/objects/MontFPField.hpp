@@ -18,13 +18,13 @@
 #ifndef MontFPField_hpp
 #define MontFPField_hpp
 
-#include <e2ee/objects/AbstractField.hpp>
 #include <memory>
+#include <string>
+#include <e2ee/objects/AbstractField.hpp>
 
 namespace e2ee {
   
   class MontFPField:
-          public PbcObjectTypeIdentifier<TYPE_FIELD, SUBTYPE_MONTFP>,
           public virtual AbstractField,
           public virtual PbcComparable<MontFPField>,
           public virtual PbcSerializableField {
@@ -47,8 +47,10 @@ namespace e2ee {
                 const boost::uuids::uuid &id,
                 const rapidjson::Value &value);
 
-    using PbcObjectTypeIdentifier::getType;
-    using PbcObjectTypeIdentifier::getSubtype;
+    const std::string &getSubtype() const noexcept override {
+      static std::string value = SUBTYPE_MONTFP;
+      return value;
+    }
 
     bool equals(const MontFPField& other) const final;
 

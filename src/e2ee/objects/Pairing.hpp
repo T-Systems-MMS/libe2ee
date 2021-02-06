@@ -29,7 +29,6 @@ namespace e2ee {
 class Element;
 
 class Pairing :
-        public PbcObjectTypeIdentifier<TYPE_PAIRING, SUBTYPE_GENERIC>,
         public PbcObjectImpl<struct pairing_s>,
                 public PbcComparable<Pairing> {
  public:
@@ -49,6 +48,16 @@ class Pairing :
 
  public:
   virtual ~Pairing();
+
+  const std::string &getType() const noexcept override {
+    static std::string value = TYPE_PAIRING;
+    return value;
+  }
+
+  const std::string &getSubtype() const noexcept override {
+    static std::string value = SUBTYPE_GENERIC;
+    return value;
+  }
 
   std::shared_ptr<Element> initG1();
   std::shared_ptr<Element> initG2();

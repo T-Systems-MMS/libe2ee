@@ -49,6 +49,11 @@ class AbstractField :
 
   virtual ~AbstractField() {}
 
+  const std::string &getType() const noexcept override {
+    static std::string value = TYPE_FIELD;
+    return value;
+  }
+
   bool equals(const AbstractField &other) const override;
   virtual void updateMembers() = 0;
 

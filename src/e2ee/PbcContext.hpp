@@ -129,7 +129,7 @@ class PbcContext {
           const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values);
 
   template<class T>
-  void addParser() {
+  void addParser(const std::string& _type, const std::string& _subtype) {
     static_assert(std::is_base_of<PbcObject, T>::value,
                   "invalid type argument");
 
@@ -140,8 +140,7 @@ class PbcContext {
                           const rapidjson::Value &>::value,
                   "type is not constructible with the required arguments");
 
-    std::string_view type = (T::SUBTYPE.empty()) ?
-            (T::TYPE) : (T::SUBTYPE);
+    const std::string type = _subtype.empty() ? _type : _subtype;
 
     auto fct = [](std::shared_ptr<PbcContext> context,
                   const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values,
@@ -179,12 +178,12 @@ class PbcContext {
   std::map<boost::uuids::uuid, std::shared_ptr<PbcObject>> objects;
   // this list will not be cleared on deconstruction
   std::map<boost::uuids::uuid, PbcObject*> nativeObjects;
-  std::map<std::string_view, parser_t> parsers;
+  std::map<std::string, parser_t> parsers;
   boost::uuids::uuid rootId;
 
   std::shared_ptr<e2ee::GlobalParameters> _global;
 
-  static const std::map<std::string_view, std::shared_ptr<FieldFactory>>
+  static const std::map<std::string, std::shared_ptr<FieldFactory>>
   constructors;
 
   std::shared_ptr<PbcObject>

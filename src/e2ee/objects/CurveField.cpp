@@ -22,7 +22,6 @@
 #include <e2ee/objects/AbstractField.hpp>
 #include <e2ee/PbcContext.hpp>
 #include <e2ee/json.hpp>
-#include <aixlog.hpp>
 
 namespace e2ee {
 

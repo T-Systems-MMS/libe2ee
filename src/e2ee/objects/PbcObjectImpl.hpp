@@ -48,6 +48,9 @@ class PbcObjectImpl : public virtual PbcObject {
 
     setNativeId(idOf(wrappedObject));
   }
+  PbcObjectImpl(PbcObjectImpl&&) = delete;
+  PbcObjectImpl(const PbcObjectImpl&) = delete;
+  PbcObjectImpl& operator=(PbcObjectImpl&&) = delete;
 
   virtual ~PbcObjectImpl() {}
 
@@ -88,6 +91,10 @@ class PbcObjectImpl : public virtual PbcObject {
  private:
   const T *wrappedObject;
 };
+
+typedef PbcObjectImpl<struct element_s> ElementWrapper;
+typedef PbcObjectImpl<struct field_s> FieldWrapper;
+typedef PbcObjectImpl<struct pairing_s> PairingWrapper;
 
 }  // namespace e2ee
 #endif /* afgh_pbc_wrapper_hpp */

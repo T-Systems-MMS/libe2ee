@@ -30,7 +30,6 @@
 namespace e2ee {
 
 class CurveField :
-        public PbcObjectTypeIdentifier<TYPE_FIELD, SUBTYPE_CURVE>,
         public virtual AbstractField,
         public virtual PbcComparable<CurveField>,
         public virtual PbcSerializableField {
@@ -50,6 +49,11 @@ class CurveField :
              const std::map<boost::uuids::uuid, std::shared_ptr<rapidjson::Value>>& values,
              const boost::uuids::uuid &id,
              const rapidjson::Value &value);
+
+  const std::string &getSubtype() const noexcept override {
+    static std::string value = SUBTYPE_CURVE;
+    return value;
+  }
 
   bool equals(const CurveField &other) const final;
 

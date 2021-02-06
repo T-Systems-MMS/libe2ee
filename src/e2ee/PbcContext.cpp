@@ -21,7 +21,9 @@
 #include <memory>
 #include <iostream>
 #include <utility>
+#if !(defined(__GNUC__) && defined(__APPLE__))
 #include <aixlog.hpp>
+#endif
 #include <e2ee/objects/PbcObject.hpp>
 #include <e2ee/errors.hpp>
 #include <e2ee/json.hpp>
@@ -37,25 +39,25 @@
 
 namespace e2ee {
 
-const std::map<std::string_view, std::shared_ptr<FieldFactory>>
+const std::map<std::string, std::shared_ptr<FieldFactory>>
         PbcContext::constructors = {
-        {CurveField::SUBTYPE,
+        {SUBTYPE_CURVE,
                 std::make_shared<FieldFactoryImpl<CurveField>>()},
-        {MontFPField::SUBTYPE,
+        {SUBTYPE_MONTFP,
                 std::make_shared<FieldFactoryImpl<MontFPField>>()},
-        {QuadraticField::SUBTYPE,
+        {SUBTYPE_QUADRATIC,
                 std::make_shared<FieldFactoryImpl<QuadraticField>>()},
-        {MultiplicativeSubgroup::SUBTYPE,
+        {SUBTYPE_MULTIPLICATIVE,
                 std::make_shared<FieldFactoryImpl<MultiplicativeSubgroup>>()}};
 
 PbcContext::PbcContext() :
         rootId(boost::uuids::nil_uuid()) {
-  addParser<MontFPField>();
-  addParser<CurveField>();
-  addParser<QuadraticField>();
-  addParser<MultiplicativeSubgroup>();
-  addParser<Pairing>();
-  addParser<Element>();
+  addParser<MontFPField>(TYPE_FIELD, SUBTYPE_MONTFP);
+  addParser<CurveField>(TYPE_FIELD, SUBTYPE_CURVE);
+  addParser<QuadraticField>(TYPE_FIELD, SUBTYPE_QUADRATIC);
+  addParser<MultiplicativeSubgroup>(TYPE_FIELD, SUBTYPE_MULTIPLICATIVE);
+  addParser<Pairing>(TYPE_PAIRING, SUBTYPE_GENERIC);
+  addParser<Element>(TYPE_ELEMENT, SUBTYPE_GENERIC);
 }
 
 context_ptr PbcContext::createInstance() {
@@ -71,7 +73,7 @@ void PbcContext::constructObject(
         std::shared_ptr<rapidjson::Value> value) {
   afgh_check(value->HasMember(KEY_TYPE), "missing 'type' key");
   afgh_check((*value)[KEY_TYPE.c_str()].IsString(), "invalid 'type' key");
-  std::string_view type = (*value)[KEY_TYPE.c_str()].GetString();
+  std::string type = (*value)[KEY_TYPE.c_str()].GetString();
 
   if (KEY_FIELD == type) {
     afgh_check(value->HasMember(KEY_SUBTYPE), "missing 'subtype' key");
@@ -188,6 +190,7 @@ void PbcContext::finalizeObjects(
         status += 100;
       } else {
         const percent_t new_status = i.second->finalize(values);
+#if !(defined(__GNUC__) && defined(__APPLE__))
         LOG(TRACE) << i.second->getType();
         LOG(TRACE) << COND(! i.second->getSubtype().empty()) << "::" << i.second->getSubtype();
         LOG(TRACE) << "::finalize('"
@@ -196,12 +199,15 @@ void PbcContext::finalizeObjects(
                   << static_cast<PbcObject*>(i.second.get())
                   << "')"
                   << " => " << new_status << "%" << std::endl;
+#endif
         assert(i.second->isFinal() == (new_status == 100));
         status += new_status;
         isFinal &= i.second->isFinal();
       }
     }
+#if !(defined(__GNUC__) && defined(__APPLE__))
     LOG(DEBUG) << status/objects.size() << "% " << std::endl;
+#endif
 
     /*
      * prevent endless loops
