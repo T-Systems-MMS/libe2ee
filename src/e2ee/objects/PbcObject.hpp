@@ -199,7 +199,7 @@ class PbcObject {
   virtual void isFinal(bool f) { _isFinal = f; }
 
  private:
-  static boost::uuids::random_generator gen;
+  boost::uuids::random_generator gen;
   boost::uuids::uuid id;
   boost::uuids::uuid nativeId;
 
