@@ -1,7 +1,7 @@
 #include <iostream>
 
 #define CATCH_CONFIG_RUNNER
-#include <catch2/catch.hpp>
+#include <catch.hpp>
 
 #if defined(__clang__) || !defined(__APPLE__)
 

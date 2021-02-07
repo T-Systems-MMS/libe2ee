@@ -47,5 +47,5 @@ set(CMAKE_SWIG_FLAGS ${CMAKE_SWIG_FLAGS} "-package" "com.tsystems_mms.je2ee")
 swig_add_library(je2ee
         LANGUAGE java
         OUTPUT_DIR "${PROJECT_SOURCE_DIR}/src/java/com/tsystems_mms/je2ee"
-        SOURCES ${E2EE_SRCS} ${SHA2_SRCS} "${PROJECT_SOURCE_DIR}/src/je2ee.i")
-swig_link_libraries(je2ee pbc ${GMP_LIBRARIES})
+        SOURCES ${SHA2_SRCS} "${PROJECT_SOURCE_DIR}/src/je2ee.i")
+swig_link_libraries(je2ee e2ee pbc ${GMP_LIBRARIES})

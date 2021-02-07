@@ -9,7 +9,7 @@
 #include <gmp.h>
 #include <string>
 #include <memory>
-#include <catch2/catch.hpp>
+#include <catch.hpp>
 #include <e2ee/e2ee.hpp>
 #include <e2ee/objects/KeyPair.hpp>
 
