@@ -84,7 +84,7 @@ std::unique_ptr<std::string> limbs_to_str(
   return std::make_unique<std::string>(&buffer[0]);
 }
 
-std::unique_ptr<mp_limb_t> str_to_limbs(
+std::unique_ptr<mp_limb_t[]> str_to_limbs(
         const std::string::const_iterator& begin,
         const std::string::const_iterator& end,
         size_t *limbs) {
@@ -92,7 +92,7 @@ std::unique_ptr<mp_limb_t> str_to_limbs(
   std::transform(begin, end, strTemp.begin(), convert_reverse);
   auto m = new mp_limb_t[strTemp.size() + 1]();
   *limbs = mpn_set_str(m, &strTemp[0], strTemp.size(), CONVERSION_BASE);
-  return std::unique_ptr<mp_limb_t>(m);
+  return std::unique_ptr<mp_limb_t[]>(m);
 }
 
 afgh_mpz_t
@@ -137,7 +137,7 @@ afgh_mpz_t json_to_mpz(const rapidjson::Value& jobj) {
   return str_to_mpz(strObj.cbegin(), strObj.cend());
 }
 
-std::unique_ptr<mp_limb_t> json_to_limbs(const rapidjson::Value& jobj) {
+std::unique_ptr<mp_limb_t[]> json_to_limbs(const rapidjson::Value& jobj) {
   assert(jobj.IsString());
   const std::string strObj(jobj.GetString());
   size_t limbs = 0;

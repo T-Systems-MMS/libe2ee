@@ -39,7 +39,7 @@ char convert_forward(const char &c);
 
 char convert_reverse(const char &c);
 
-std::unique_ptr<mp_limb_t> str_to_limbs(
+std::unique_ptr<mp_limb_t[]> str_to_limbs(
         const std::string::const_iterator& begin,
         const std::string::const_iterator& end, size_t *limbs);
 
@@ -63,7 +63,7 @@ std::unique_ptr<std::string> limbs_to_str(
 afgh_mpz_t
 json_to_mpz(const rapidjson::Value &jobj);
 
-std::unique_ptr<mp_limb_t>
+std::unique_ptr<mp_limb_t[]>
 json_to_limbs(const rapidjson::Value &jobj);
 
 boost::uuids::uuid

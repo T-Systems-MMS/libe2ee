@@ -33,7 +33,7 @@ TEST_CASE("test conversion between formats", "[conversion]") {
   SECTION("TestLimbSerialization1") {
     auto strObj = createRandomNumber(std::rand() % 50 + 10);
     size_t limbs = 0;
-    std::unique_ptr<mp_limb_t> tmp = e2ee::str_to_limbs(strObj->cbegin(), strObj->cend(), &limbs);
+    auto tmp = e2ee::str_to_limbs(strObj->cbegin(), strObj->cend(), &limbs);
     auto strObj2 = e2ee::limbs_to_str(tmp.get(), limbs);
     REQUIRE(*strObj == *strObj2);
   }
@@ -43,7 +43,8 @@ TEST_CASE("test conversion between formats", "[conversion]") {
     mp_limb_t value = random();
     auto strObj = e2ee::limbs_to_str(&value, limbs);
     auto value2 = e2ee::str_to_limbs(strObj->cbegin(), strObj->cend(), &limbs);
-    REQUIRE(value == *value2);
+    auto diff = mpn_cmp(&value, value2.get(), limbs);
+    REQUIRE(diff == 0);
   }
 
 SECTION("TestLimbSerialization2") {
