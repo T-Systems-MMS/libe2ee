@@ -10,3 +10,7 @@
 [submodule "src/lib/sha2"]
 	path = src/lib/sha2
 	url = https://github.com/ogay/sha2.git
+[submodule "src/lib/Catch2"]
+	path = src/lib/Catch2
+	url = https://github.com/catchorg/Catch2.git
+	branch = v2.x
