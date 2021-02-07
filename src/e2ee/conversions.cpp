@@ -99,7 +99,8 @@ afgh_mpz_t
 str_to_mpz(const std::string::const_iterator& begin,
            const std::string::const_iterator& end,
            size_t base) {
-  afgh_mpz_t m(new __mpz_struct[1], [](__mpz_struct *ptr) { mpz_clear(ptr); });
+  afgh_mpz_t m(new __mpz_struct[1],
+		  [](__mpz_struct* ptr) { mpz_clear(ptr); delete[] ptr;});
   mpz_init(m.get());
   if (begin >= end) {
     afgh_throw_line("Json object is not a string");
